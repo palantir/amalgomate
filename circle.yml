@@ -29,3 +29,10 @@ test:
     - cd "$GO_PROJECT_SRC_PATH" && go install $(./godelw packages)
     - mkdir -p "$CIRCLE_TEST_REPORTS/$CIRCLE_PROJECT_REPONAME"
     - cd "$GO_PROJECT_SRC_PATH" && ./godelw verify --apply=false --junit-output="$CIRCLE_TEST_REPORTS/$CIRCLE_PROJECT_REPONAME/$CIRCLE_PROJECT_REPONAME-tests.xml"
+
+deployment:
+  master:
+    branch: master
+    owner: palantir
+    commands:
+      - cd "$GO_PROJECT_SRC_PATH" && ./godelw github-wiki --docs-dir docs --repository=git@github.com:palantir/amalgomate.wiki.git
