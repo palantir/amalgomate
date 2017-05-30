@@ -37,12 +37,10 @@ stages:
       - type: artifacts-store
         path: /tmp/test-results
         destination: test-results
-  deployment:
-    workDir: /go/src/github.com/palantir/amalgomate
-    steps:
       - type: deploy
-        name: "Deploy to staging"
+        name: "Deploy docs"
         command: |
-                  if [ "${CIRCLE_BRANCH}" == "master" ]; then
-                    ./godelw github-wiki --docs-dir docs --repository=git@github.com:palantir/amalgomate.wiki.git
-                  fi
+          set -eu
+          if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            ./godelw github-wiki --docs-dir docs --repository=git@github.com:palantir/amalgomate.wiki.git
+          fi
