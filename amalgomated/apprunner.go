@@ -30,7 +30,7 @@ func RunApp(osArgs []string, fset *flag.FlagSet, cmdLibrary CmdLibrary, app func
 
 // processProxyCmd checks the second non-flag element of the provided osArgs slice (which is the first argument to the
 // executable) to see if it is a proxy command. If it is, "os.Args" is set to be the non-proxy command arguments and the
-// un-proxied command is run; otherwise, it is a no-op. Returns true if the command waas proxied and the proxied command
+// un-proxied command is run; otherwise, it is a no-op. Returns true if the command was proxied and the proxied command
 // was run; false otherwise. Note that, if a proxied command is run, it is possible that the proxied command may call
 // some form of "os.Exit" itself. If this is the case, then this function will be terminal and will not return a value.
 func processProxyCmd(osArgs []string, fset *flag.FlagSet, cmdLibrary CmdLibrary) bool {
