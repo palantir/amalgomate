@@ -16,13 +16,6 @@
 			"revisionTime": "2015-12-22T15:32:29Z"
 		},
 		{
-			"checksumSHA1": "L3leymg2RT8hFl5uL+5KP/LpBkg=",
-			"origin": "github.com/palantir/pkg/vendor/github.com/mitchellh/go-wordwrap",
-			"path": "github.com/mitchellh/go-wordwrap",
-			"revision": "e273f3402360a961132997354285f8e83b1799e4",
-			"revisionTime": "2016-11-15T16:45:42Z"
-		},
-		{
 			"checksumSHA1": "G7f4R06x7VYkSDI9BxO28fx7k+k=",
 			"path": "github.com/nmiyake/pkg/dirs",
 			"revision": "df873ad19d6f60ce7ddeea343e397c2a60642ae4",
@@ -41,22 +34,10 @@
 			"revisionTime": "2016-11-01T05:21:29Z"
 		},
 		{
-			"checksumSHA1": "M5EBLKDeN3LFAOPLGOE/zHFUTY4=",
-			"path": "github.com/palantir/pkg/cli",
-			"revision": "e273f3402360a961132997354285f8e83b1799e4",
-			"revisionTime": "2016-11-15T16:45:42Z"
-		},
-		{
-			"checksumSHA1": "HkFQIo1ELmvNK73cm4dhDa2YKUM=",
-			"path": "github.com/palantir/pkg/cli/completion",
-			"revision": "e273f3402360a961132997354285f8e83b1799e4",
-			"revisionTime": "2016-11-15T16:45:42Z"
-		},
-		{
-			"checksumSHA1": "9HlmmeyY47LMKi5EjxNILngYGZM=",
-			"path": "github.com/palantir/pkg/cli/flag",
-			"revision": "e273f3402360a961132997354285f8e83b1799e4",
-			"revisionTime": "2016-11-15T16:45:42Z"
+			"checksumSHA1": "ljHTG0MHfEPZXIu9hjwdAzK8gyo=",
+			"path": "github.com/palantir/pkg/cobracli",
+			"revision": "4a3dcb6660324a0ff639677177df84f3af02d6d5",
+			"revisionTime": "2017-11-21T03:11:39Z"
 		},
 		{
 			"checksumSHA1": "JAeK0zQn4QpNfxpE3ElBksT+v3E=",
@@ -70,6 +51,18 @@
 			"path": "github.com/pmezard/go-difflib/difflib",
 			"revision": "976c720a22c8eb4eb6a0b4348ad85ad12491a506",
 			"revisionTime": "2016-09-25T22:06:09Z"
+		},
+		{
+			"checksumSHA1": "Xu6+6A2lmBA7CevFeUJqseC/b88=",
+			"path": "github.com/spf13/cobra",
+			"revision": "19e54c4a2b8a78c9d54b2bed61b1a6c5e1bfcf6f",
+			"revisionTime": "2017-11-19T09:22:51Z"
+		},
+		{
+			"checksumSHA1": "fKq6NiaqP3DFxnCRF5mmpJWTSUA=",
+			"path": "github.com/spf13/pflag",
+			"revision": "4c012f6dcd9546820e378d0bdda4d8fc772cdfea",
+			"revisionTime": "2017-11-06T14:28:49Z"
 		},
 		{
 			"checksumSHA1": "Q2V7Zs3diLmLfmfbiuLpSxETSuY=",
@@ -88,13 +81,6 @@
 			"path": "github.com/termie/go-shutil",
 			"revision": "bcacb06fecaeec8dc42af03c87c6949f4a05c74c",
 			"revisionTime": "2014-07-29T21:59:57Z"
-		},
-		{
-			"checksumSHA1": "y3a1tOZVwKCqG2yJZvAYycnelyM=",
-			"origin": "github.com/palantir/pkg/vendor/golang.org/x/crypto/ssh/terminal",
-			"path": "golang.org/x/crypto/ssh/terminal",
-			"revision": "e273f3402360a961132997354285f8e83b1799e4",
-			"revisionTime": "2016-11-15T16:45:42Z"
 		},
 		{
 			"checksumSHA1": "Pi0u97cPlWSJJ4O/YjfOcWsACNA=",
