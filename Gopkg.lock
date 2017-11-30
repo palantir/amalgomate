@@ -27,8 +27,14 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/palantir/godel"
+  packages = ["framework/builtintasks/installupdate/layout","framework/godel","framework/godellauncher","framework/pluginapi","framework/verifyorder","pkg/dirchecksum"]
+  revision = "122825f4fe5ea35f69ed662671e16021ef3405e2"
+
+[[projects]]
+  branch = "master"
   name = "github.com/palantir/pkg"
-  packages = ["cobracli"]
+  packages = ["cobracli","matcher","specdir"]
   revision = "72fc21d797a58b78a674190cf65f6238c949b570"
 
 [[projects]]
@@ -82,6 +88,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f5517e457902a3b666540ef37e0be5b6385507d8ab7af2d4fef98fd763e8c729"
+  inputs-digest = "bc176e842f89a9a6aebbe3d3e07b67b86fcc64908f455e06b9bcdc8d43c32867"
   solver-name = "gps-cdcl"
   solver-version = 1
