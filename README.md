@@ -66,7 +66,3 @@ subdirectory of a main project, then the `distance-to-project-pkg` parameter can
 the `main` package and the project root package. When a program is being wrapped, the project package is copied into
 the vendor directory of the output directory, so this parameter can be used in cases where the `main` package is in a
 subdirectory of a project but more files need to be copied in order for the import to function correctly.
-
-License
--------
-This project is made available under the [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
