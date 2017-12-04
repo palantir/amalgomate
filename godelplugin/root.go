@@ -65,7 +65,7 @@ func runAmalgomate(param Param, verify bool, stdout io.Writer) error {
 
 		if verify {
 			if _, err := os.Stat(val.OutputDir); os.IsNotExist(err) {
-				verifyFailedFn(k, "output directory %s does not exist")
+				verifyFailedFn(k, fmt.Sprintf("output directory %s does not exist", val.OutputDir))
 				continue
 			}
 
