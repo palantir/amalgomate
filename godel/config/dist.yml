@@ -16,4 +16,4 @@ products:
           arch: amd64
         - os: linux
           arch: amd64
-group-id: com.palantir.deployability
+group-id: com.palantir
