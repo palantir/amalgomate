@@ -11,6 +11,8 @@ products:
   amalgomate-plugin:
     build:
       main-pkg: ./godelplugin
+      environment:
+        CGO_ENABLED: "0"
       os-archs:
         - os: darwin
           arch: amd64
