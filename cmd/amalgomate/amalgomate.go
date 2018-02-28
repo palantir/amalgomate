@@ -24,10 +24,11 @@ func Run(cfg Config, outputDir, pkg string) error {
 	}
 
 	if !filepath.IsAbs(outputDir) {
-		var err error
-		if outputDir, err = filepath.Abs(outputDir); err != nil {
-			return errors.Wrapf(err, "failed to convert output directory to an absolute path: %s", outputDir)
+		wd, err := os.Getwd()
+		if err != nil {
+			return errors.Wrapf(err, "failed to get working directory")
 		}
+		outputDir = path.Join(wd, outputDir)
 	}
 
 	// repackage main files specified in configuration
