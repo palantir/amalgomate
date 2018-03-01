@@ -79,24 +79,24 @@ func repackage(config Config, outputDir string) error {
 		}
 
 		// copy project package into vendor directory in output dir if it does not already exist
-		projectDestDir := path.Join(vendorDir, projectImportPath)
+		projectDstDir := path.Join(vendorDir, projectImportPath)
 
-		if _, err := os.Stat(projectDestDir); os.IsNotExist(err) {
-			if err := shutil.CopyTree(projectRootDir, projectDestDir, vendorCopyOptions(currPkg.OmitVendorDirs)); err != nil {
-				return errors.Wrapf(err, "failed to copy directory %s to %s", projectRootDir, projectDestDir)
+		if _, err := os.Stat(projectDstDir); os.IsNotExist(err) {
+			if err := shutil.CopyTree(projectRootDir, projectDstDir, vendorCopyOptions(currPkg.OmitVendorDirs)); err != nil {
+				return errors.Wrapf(err, "failed to copy directory %s to %s", projectRootDir, projectDstDir)
 			}
-			if _, err := removeEmptyDirs(projectDestDir); err != nil {
-				return errors.Wrapf(err, "failed to remove empty directories in destination %s", projectDestDir)
+			if _, err := removeEmptyDirs(projectDstDir); err != nil {
+				return errors.Wrapf(err, "failed to remove empty directories in destination %s", projectDstDir)
 			}
 		} else if err != nil {
-			return errors.Wrapf(err, "failed to stat %s", projectDestDir)
+			return errors.Wrapf(err, "failed to stat %s", projectDstDir)
 		}
 
-		projectDestDirImport, err := build.ImportDir(projectDestDir, build.FindOnly)
+		projectDstDirImport, err := build.ImportDir(projectDstDir, build.FindOnly)
 		if err != nil {
-			return errors.Wrapf(err, "unable to import project destination directory %s", projectDestDir)
+			return errors.Wrapf(err, "unable to import project destination directory %s", projectDstDir)
 		}
-		projectDestDirImportPath := projectDestDirImport.ImportPath
+		projectDstDirImportPath := projectDstDirImport.ImportPath
 
 		// rewrite imports for all files in copied directory
 		fileSet := token.NewFileSet()
@@ -104,7 +104,7 @@ func repackage(config Config, outputDir string) error {
 		goFiles := make(map[string]*ast.File)
 
 		flagPkgImported := false
-		if err := filepath.Walk(projectDestDir, func(currPath string, currInfo os.FileInfo, err error) error {
+		if err := filepath.Walk(projectDstDir, func(currPath string, currInfo os.FileInfo, err error) error {
 			if !currInfo.IsDir() && strings.HasSuffix(currInfo.Name(), ".go") {
 				fileNode, err := parser.ParseFile(fileSet, currPath, nil, parser.ParseComments)
 				if err != nil {
@@ -121,9 +121,9 @@ func repackage(config Config, outputDir string) error {
 					updatedImport := ""
 					if currImportPathUnquoted == "flag" {
 						flagPkgImported = true
-						updatedImport = path.Join(projectDestDirImportPath, "amalgomated_flag")
+						updatedImport = path.Join(projectDstDirImportPath, "amalgomated_flag")
 					} else if strings.HasPrefix(currImportPathUnquoted, projectImportPath) {
-						updatedImport = strings.Replace(currImportPathUnquoted, projectImportPath, projectDestDirImportPath, -1)
+						updatedImport = strings.Replace(currImportPathUnquoted, projectImportPath, projectDstDirImportPath, -1)
 					}
 
 					if updatedImport != "" {
@@ -169,7 +169,7 @@ func repackage(config Config, outputDir string) error {
 				return errors.WithStack(err)
 			}
 			fmtSrcDir := path.Join(goRoot, "src", "flag")
-			fmtDstDir := path.Join(projectDestDir, "amalgomated_flag")
+			fmtDstDir := path.Join(projectDstDir, "amalgomated_flag")
 			if err := shutil.CopyTree(fmtSrcDir, fmtDstDir, vendorCopyOptions(currPkg.OmitVendorDirs)); err != nil {
 				return errors.Wrapf(err, "failed to copy directory %s to %s", fmtSrcDir, fmtDstDir)
 			}
