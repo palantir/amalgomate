@@ -11,6 +11,7 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -83,6 +84,9 @@ func repackage(config Config, outputDir string) error {
 		if _, err := os.Stat(projectDestDir); os.IsNotExist(err) {
 			if err := shutil.CopyTree(projectRootDir, projectDestDir, nil); err != nil {
 				return errors.Wrapf(err, "failed to copy directory %s to %s", projectRootDir, projectDestDir)
+			}
+			if _, err := removeEmptyDirs(projectDestDir); err != nil {
+				return errors.Wrapf(err, "failed to remove empty directories in destination %s", projectDestDir)
 			}
 		} else if err != nil {
 			return errors.Wrapf(err, "failed to stat %s", projectDestDir)
@@ -167,7 +171,10 @@ func repackage(config Config, outputDir string) error {
 			fmtSrcDir := path.Join(goRoot, "src", "flag")
 			fmtDstDir := path.Join(projectDestDir, "amalgomated_flag")
 			if err := shutil.CopyTree(fmtSrcDir, fmtDstDir, vendorCopyOptions()); err != nil {
-				return errors.Wrapf(err, "failed to copy directory %s to %s", projectRootDir, projectDestDir)
+				return errors.Wrapf(err, "failed to copy directory %s to %s", fmtSrcDir, fmtDstDir)
+			}
+			if _, err := removeEmptyDirs(fmtDstDir); err != nil {
+				return errors.Wrapf(err, "failed to remove empty directories in destination %s", fmtDstDir)
 			}
 		}
 
@@ -199,6 +206,41 @@ func vendorCopyOptions() *shutil.CopyTreeOptions {
 		},
 		CopyFunction: shutil.Copy,
 	}
+}
+
+// removeEmptyDirs removes all directories in rootDir (including the root directory itself) that are empty or contain
+// only empty directories.
+func removeEmptyDirs(rootDir string) (removed bool, rErr error) {
+	dirContent, err := ioutil.ReadDir(rootDir)
+	if err != nil {
+		return false, errors.Wrapf(err, "failed to read directory")
+	}
+
+	removeCurrentDir := true
+	for _, fi := range dirContent {
+		if !fi.IsDir() {
+			// if directory contains non-directory, it will not be removed
+			removeCurrentDir = false
+			continue
+		}
+		currChildRemoved, err := removeEmptyDirs(path.Join(rootDir, fi.Name()))
+		if err != nil {
+			return false, err
+		}
+		if !currChildRemoved {
+			// if a child directory was not removed, it means it was non-empty, so this directory is non-empty
+			removeCurrentDir = false
+			continue
+		}
+	}
+
+	if !removeCurrentDir {
+		return false, nil
+	}
+	if err := os.Remove(rootDir); err != nil {
+		return false, errors.Wrapf(err, "failed to remove directory")
+	}
+	return true, nil
 }
 
 func removeImportPathChecking(fileNode *ast.File) {
