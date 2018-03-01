@@ -14,6 +14,7 @@ import (
 type SrcPkg struct {
 	MainPkg              string `yaml:"main"`
 	DistanceToProjectPkg int    `yaml:"distance-to-project-pkg"`
+	OmitVendorDirs       bool   `yaml:"omit-vendor-dirs"`
 }
 
 type Config struct {
