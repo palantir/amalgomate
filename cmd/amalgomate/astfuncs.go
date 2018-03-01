@@ -82,7 +82,7 @@ func repackage(config Config, outputDir string) error {
 		projectDestDir := path.Join(vendorDir, projectImportPath)
 
 		if _, err := os.Stat(projectDestDir); os.IsNotExist(err) {
-			if err := shutil.CopyTree(projectRootDir, projectDestDir, nil); err != nil {
+			if err := shutil.CopyTree(projectRootDir, projectDestDir, vendorCopyOptions(currPkg.OmitVendorDirs)); err != nil {
 				return errors.Wrapf(err, "failed to copy directory %s to %s", projectRootDir, projectDestDir)
 			}
 			if _, err := removeEmptyDirs(projectDestDir); err != nil {
@@ -170,7 +170,7 @@ func repackage(config Config, outputDir string) error {
 			}
 			fmtSrcDir := path.Join(goRoot, "src", "flag")
 			fmtDstDir := path.Join(projectDestDir, "amalgomated_flag")
-			if err := shutil.CopyTree(fmtSrcDir, fmtDstDir, vendorCopyOptions()); err != nil {
+			if err := shutil.CopyTree(fmtSrcDir, fmtDstDir, vendorCopyOptions(currPkg.OmitVendorDirs)); err != nil {
 				return errors.Wrapf(err, "failed to copy directory %s to %s", fmtSrcDir, fmtDstDir)
 			}
 			if _, err := removeEmptyDirs(fmtDstDir); err != nil {
@@ -189,16 +189,18 @@ func repackage(config Config, outputDir string) error {
 	return nil
 }
 
-func vendorCopyOptions() *shutil.CopyTreeOptions {
+func vendorCopyOptions(skipVendorDirs bool) *shutil.CopyTreeOptions {
 	return &shutil.CopyTreeOptions{
 		Ignore: func(dir string, infos []os.FileInfo) []string {
 			// ignore non-go files, go test files and testdata directories
 			var ignore []string
 			for _, currInfo := range infos {
+				isHidden := strings.HasPrefix(currInfo.Name(), ".")
 				isTestDataDir := currInfo.IsDir() && currInfo.Name() == "testdata"
 				notGoFile := !currInfo.IsDir() && !strings.HasSuffix(currInfo.Name(), ".go")
 				goTestFile := !currInfo.IsDir() && strings.HasSuffix(currInfo.Name(), "_test.go")
-				if isTestDataDir || notGoFile || goTestFile {
+				isVendorDir := currInfo.IsDir() && currInfo.Name() == "vendor"
+				if isHidden || isTestDataDir || notGoFile || goTestFile || (skipVendorDirs && isVendorDir) {
 					ignore = append(ignore, currInfo.Name())
 				}
 			}
