@@ -18,4 +18,4 @@ products:
           arch: amd64
         - os: linux
           arch: amd64
-group-id: com.palantir
+group-id: com.palantir.amalgomate

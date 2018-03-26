@@ -1,0 +1,7 @@
+exclude:
+  names:
+    - "\\..+"
+    - "vendor"
+    - "testdata"
+  paths:
+    - "godel"

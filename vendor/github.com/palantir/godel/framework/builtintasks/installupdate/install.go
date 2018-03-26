@@ -21,7 +21,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/nmiyake/archiver"
+	"github.com/mholt/archiver"
 	"github.com/nmiyake/pkg/dirs"
 	"github.com/palantir/pkg/specdir"
 	"github.com/pkg/errors"
@@ -65,7 +65,7 @@ func install(src godelgetter.PkgSrc, stdout io.Writer) (string, error) {
 		return "", errors.Wrapf(err, "failed to create temporary directory rooted at %s", gödelHome)
 	}
 
-	if err := archiver.UntarGz(tgzFilePath, tmpDir); err != nil {
+	if err := archiver.TarGz.Open(tgzFilePath, tmpDir); err != nil {
 		return "", errors.Wrapf(err, "failed to extract archive %s to %s", tgzFilePath, tmpDir)
 	}
 
@@ -109,7 +109,7 @@ func install(src godelgetter.PkgSrc, stdout io.Writer) (string, error) {
 }
 
 // getExecutableVersion gets the version of gödel contained in the provided root gödel directory. Invokes the executable
-// for the current platform with the "--version" flag and returns the version determined by that output.
+// for the current platform with the "version" task and returns the version determined by that output.
 func getExecutableVersion(gödelApp specdir.SpecDir) (string, error) {
 	executablePath := gödelApp.Path(layout.AppExecutable)
 	cmd := exec.Command(executablePath, "version")
@@ -123,6 +123,5 @@ func getExecutableVersion(gödelApp specdir.SpecDir) (string, error) {
 	if len(parts) != 3 {
 		return "", errors.Errorf(`expected output %s to have 3 parts when split by " ", but was %v`, outputString, parts)
 	}
-
 	return parts[2], nil
 }
