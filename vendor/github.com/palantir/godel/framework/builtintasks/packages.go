@@ -18,38 +18,34 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/nmiyake/pkg/dirs"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/palantir/godel/framework/builtintasks/packages"
+	"github.com/palantir/godel/framework/godel/config"
 	"github.com/palantir/godel/framework/godellauncher"
 )
 
 func PackagesTask() godellauncher.Task {
+	var globalCfg godellauncher.GlobalConfig
 	return godellauncher.CobraCLITask(&cobra.Command{
 		Use:   "packages",
 		Short: "Lists all of the packages in the project except those excluded by configuration",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			wd, err := dirs.GetwdEvalSymLinks()
+			projectDir, err := globalCfg.ProjectDir()
 			if err != nil {
-				return errors.Wrapf(err, "failed to determine working directory")
+				return err
 			}
 
-			cfgDir, err := godellauncher.ConfigDirPath(wd)
+			cfg, err := config.ReadGodelConfigFromProjectDir(projectDir)
 			if err != nil {
 				return err
 			}
-			cfg, err := godellauncher.ReadGodelConfig(cfgDir)
-			if err != nil {
-				return err
-			}
-			pkgs, err := packages.List(cfg.Exclude.Matcher(), wd)
+			pkgs, err := packages.List(cfg.Exclude.Matcher(), projectDir)
 			if err != nil {
 				return err
 			}
 			fmt.Fprintln(cmd.OutOrStdout(), strings.Join(pkgs, "\n"))
 			return nil
 		},
-	})
+	}, &globalCfg)
 }

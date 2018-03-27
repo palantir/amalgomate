@@ -29,6 +29,8 @@ import (
 
 // DownloadIntoDirectory downloads the provided package into the specified output directory. The output directory must
 // already exist. The download progress is written to the provided writer. Returns the path to the downloaded file.
+// If the path of pkgSrc and the download destination both refer to the same file (and the file exists), then if a
+// checksum is provided it is verified (otherwise it is a no-op).
 func DownloadIntoDirectory(pkgSrc PkgSrc, dstDir string, w io.Writer) (rPkg string, rErr error) {
 	if dstDirInfo, err := os.Stat(dstDir); err != nil {
 		if os.IsNotExist(err) {
@@ -38,49 +40,67 @@ func DownloadIntoDirectory(pkgSrc PkgSrc, dstDir string, w io.Writer) (rPkg stri
 	} else if !dstDirInfo.IsDir() {
 		return "", errors.Errorf("destination path %s exists, but is not a directory", dstDir)
 	}
-	return Download(pkgSrc, path.Join(dstDir, pkgSrc.Name()), w)
+
+	dstFilePath := path.Join(dstDir, pkgSrc.Name())
+	if !pkgSrc.Same(dstFilePath) {
+		// download the source package to the destination
+		if err := Download(pkgSrc, dstFilePath, w); err != nil {
+			return "", err
+		}
+	} else if wantChecksum := pkgSrc.Checksum(); wantChecksum != "" {
+		// destination file and source file are the same -- if expected checksum was provided, verify that the checksum
+		// for the existing file matches the expected checksum.
+		checksum, err := computeSHA256Checksum(dstFilePath)
+		if err != nil {
+			return "", errors.Wrapf(err, "failed to compute checksum of %s", dstFilePath)
+		}
+		if checksum != wantChecksum {
+			return "", errors.Errorf("checksum of %s does not match provided checksum: expected %s, was %s", dstFilePath, wantChecksum, checksum)
+		}
+	}
+	return dstFilePath, nil
 }
 
 // Download downloads the provided package to the specified path. The parent directory of the path must exist. If the
-// destination file already exists, it is overwritten. The download progress is written to the provided writer. Returns
-// the path to the downloaded file.
-func Download(pkgSrc PkgSrc, dstFilePath string, w io.Writer) (rPkg string, rErr error) {
+// destination file already exists, it is overwritten. The download progress is written to the provided writer.
+func Download(pkgSrc PkgSrc, dstFilePath string, w io.Writer) (rErr error) {
 	wantChecksum := pkgSrc.Checksum()
 	if info, err := os.Stat(dstFilePath); err == nil {
 		if info.IsDir() {
-			return "", errors.Errorf("destination path %s already exists and is a directory", dstFilePath)
+			return errors.Errorf("destination path %s already exists and is a directory", dstFilePath)
 		}
 		if wantChecksum != "" {
-			// if tgz already exists at destination and checksum is known, verify checksum of existing tgz.
+			// if file already exists at destination and checksum is known, verify checksum of existing file.
 			// If it matches, use existing file.
 			checksum, err := computeSHA256Checksum(dstFilePath)
 			if err != nil {
-				return "", errors.Wrapf(err, "failed to compute checksum of %s", dstFilePath)
+				return errors.Wrapf(err, "failed to compute checksum of %s", dstFilePath)
 			}
 			if checksum == wantChecksum {
-				return dstFilePath, nil
+				return nil
 			}
 		}
 	}
 
-	// create new file for package (overwrite any existing file)
-	dstFile, err := os.Create(dstFilePath)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to create file %s", dstFilePath)
-	}
-	defer func() {
-		if err := dstFile.Close(); err != nil && rErr == nil {
-			rErr = errors.Wrapf(err, "failed to close file %s in defer", dstFilePath)
-		}
-	}()
-
+	// open reader from source
 	r, size, err := pkgSrc.Reader()
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer func() {
 		if err := r.Close(); err != nil && rErr == nil {
 			rErr = errors.Wrapf(err, "failed to close reader for %s in defer", pkgSrc.Path())
+		}
+	}()
+
+	// create new file for package (overwrite any existing file)
+	dstFile, err := os.Create(dstFilePath)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create file %s", dstFilePath)
+	}
+	defer func() {
+		if err := dstFile.Close(); err != nil && rErr == nil {
+			rErr = errors.Wrapf(err, "failed to close file %s in defer", dstFilePath)
 		}
 	}()
 
@@ -89,17 +109,17 @@ func Download(pkgSrc PkgSrc, dstFilePath string, w io.Writer) (rPkg string, rErr
 
 	fmt.Fprintf(w, "Getting package from %v...\n", pkgSrc.Path())
 	if err := copyWithProgress(mw, r, size, w); err != nil {
-		return "", errors.Wrapf(err, "failed to copy package %s to %s", pkgSrc.Path(), dstFilePath)
+		return errors.Wrapf(err, "failed to copy package %s to %s", pkgSrc.Path(), dstFilePath)
 	}
 
 	// verify checksum if provided
 	if wantChecksum != "" {
 		actualChecksum := hex.EncodeToString(h.Sum(nil))
 		if wantChecksum != actualChecksum {
-			return "", errors.Errorf("SHA-256 checksum of downloaded package did not match expected checksum: expected %s, was %s", wantChecksum, actualChecksum)
+			return errors.Errorf("SHA-256 checksum of downloaded package did not match expected checksum: expected %s, was %s", wantChecksum, actualChecksum)
 		}
 	}
-	return dstFilePath, nil
+	return nil
 }
 
 func copyWithProgress(w io.Writer, r io.Reader, dataLen int64, stdout io.Writer) error {
