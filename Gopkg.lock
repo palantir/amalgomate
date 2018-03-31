@@ -8,6 +8,24 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/dsnet/compress"
+  packages = [".","bzip2","bzip2/internal/sais","internal","internal/errors","internal/prefix"]
+  revision = "cc9eb1d7ad760af14e8f918698f745e80377af4f"
+
+[[projects]]
+  name = "github.com/google/go-github"
+  packages = ["github"]
+  revision = "e48060a28fac52d0f1cb758bc8b87c07bac4a87d"
+  version = "v15.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/google/go-querystring"
+  packages = ["query"]
+  revision = "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
+
+[[projects]]
   name = "github.com/inconshreveable/mousetrap"
   packages = ["."]
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
@@ -20,6 +38,18 @@
   revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
 
 [[projects]]
+  name = "github.com/mattn/go-runewidth"
+  packages = ["."]
+  revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
+  version = "v0.0.2"
+
+[[projects]]
+  name = "github.com/mholt/archiver"
+  packages = ["."]
+  revision = "cdc68dd1f170b8dfc1a0d2231b5bb0967ed67006"
+  version = "v2.0"
+
+[[projects]]
   branch = "develop"
   name = "github.com/nmiyake/pkg"
   packages = ["dirs","errorstringer","gofiles"]
@@ -27,15 +57,21 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/nwaples/rardecode"
+  packages = ["."]
+  revision = "e06696f847aeda6f39a8f0b7cdff193b7690aef6"
+
+[[projects]]
+  branch = "master"
   name = "github.com/palantir/godel"
-  packages = ["framework/builtintasks/installupdate/layout","framework/godel","framework/godellauncher","framework/pluginapi","framework/verifyorder","pkg/dirchecksum"]
-  revision = "122825f4fe5ea35f69ed662671e16021ef3405e2"
+  packages = ["framework/artifactresolver","framework/builtintasks","framework/builtintasks/checkpath","framework/builtintasks/githooks","framework/builtintasks/githubwiki","framework/builtintasks/idea","framework/builtintasks/installupdate","framework/builtintasks/installupdate/layout","framework/builtintasks/packages","framework/godel","framework/godel/config","framework/godel/config/internal/v0","framework/godellauncher","framework/godellauncher/defaulttasks","framework/internal/pathsinternal","framework/internal/pluginsinternal","framework/pluginapi","framework/pluginapi/v2/pluginapi","framework/pluginapitester","framework/plugins","framework/verifyorder","godelgetter","pkg/dirchecksum","pkg/osarch","pkg/products","pkg/versionedconfig"]
+  revision = "d1ce03d38b48fe366faf1b5280c1018a8f07ede5"
 
 [[projects]]
   branch = "master"
   name = "github.com/palantir/pkg"
-  packages = ["cobracli","matcher","specdir"]
-  revision = "72fc21d797a58b78a674190cf65f6238c949b570"
+  packages = ["cobracli","matcher","pkgpath","specdir"]
+  revision = "15f6fc0c684b2603c4e75a02ca132e5c434c7297"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -64,8 +100,8 @@
 [[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert","require"]
-  revision = "69483b4bd14f5845b5a1e55bca19e954e827f1d0"
-  version = "v1.1.4"
+  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
+  version = "v1.2.1"
 
 [[projects]]
   branch = "master"
@@ -74,20 +110,38 @@
   revision = "bcacb06fecaeec8dc42af03c87c6949f4a05c74c"
 
 [[projects]]
+  name = "github.com/ulikunitz/xz"
+  packages = [".","internal/hash","internal/xlog","lzma"]
+  revision = "0c6b41e72360850ca4f98dc341fd999726ea007f"
+  version = "v0.5.4"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  revision = "13d03a9a82fba647c21a0ef8fba44a795d0f0835"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/tools"
   packages = ["go/ast/astutil"]
   revision = "36c7af3342056179a831c19ec142f2763b310f7b"
 
 [[projects]]
-  branch = "v2"
+  name = "gopkg.in/cheggaaa/pb.v1"
+  packages = ["."]
+  revision = "72b964305fba1230d3d818711138195f22b9ceea"
+  version = "v1.0.22"
+
+[[projects]]
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "287cf08546ab5e7e37d55a84f7ed3fd1db036de5"
+  revision = "86f5ed62f8a0ee96bd888d2efdfd6d4fb100a4eb"
+  version = "v2.2.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bc176e842f89a9a6aebbe3d3e07b67b86fcc64908f455e06b9bcdc8d43c32867"
+  inputs-digest = "a237a922920b3a863d96b5836c7308d52e3edde60d11067bd2efaf3e1682f099"
   solver-name = "gps-cdcl"
   solver-version = 1
