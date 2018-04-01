@@ -26,7 +26,7 @@ type ProductConfig struct {
 func UpgradeConfig(cfgBytes []byte) ([]byte, error) {
 	var cfg Config
 	if err := yaml.UnmarshalStrict(cfgBytes, &cfg); err != nil {
-		return nil, errors.Wrapf(err, "failed to unmarshal generate-plugin v0 configuration")
+		return nil, errors.Wrapf(err, "failed to unmarshal amalgomate-plugin v0 configuration")
 	}
 	return cfgBytes, nil
 }
