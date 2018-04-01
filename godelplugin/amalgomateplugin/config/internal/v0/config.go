@@ -10,14 +10,11 @@ import (
 )
 
 type Config struct {
-	// OrderedKeys stores the order in which the amalgomators should be run. If unspecified, they are run in
-	// alphabetical order based on the name of the key. If specified, every element must be present.
-	OrderedKeys []string `yaml:"ordered-keys,omitempty"`
-
 	Amalgomators map[string]ProductConfig `yaml:"amalgomators,omitempty"`
 }
 
 type ProductConfig struct {
+	Order     int    `yaml:"order,omitempty"`
 	Config    string `yaml:"config,omitempty"`
 	OutputDir string `yaml:"output-dir,omitempty"`
 	Pkg       string `yaml:"pkg,omitempty"`

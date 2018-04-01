@@ -35,11 +35,7 @@ var runCmd = &cobra.Command{
 		if err := os.Chdir(projectDirFlag); err != nil {
 			return errors.Wrapf(err, "failed to set working directory")
 		}
-		param, err := cfg.ToParam()
-		if err != nil {
-			return err
-		}
-		return amalgomateplugin.Run(param, verifyFlag, cmd.OutOrStdout())
+		return amalgomateplugin.Run(cfg.ToParam(), verifyFlag, cmd.OutOrStdout())
 	},
 }
 

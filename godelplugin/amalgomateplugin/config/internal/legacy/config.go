@@ -39,18 +39,18 @@ func UpgradeConfig(cfgBytes []byte) ([]byte, error) {
 		return nil, errors.Wrapf(err, "failed to unmarshal amalgomate-plugin legacy configuration as yaml.MapSlice")
 	}
 
-	var orderedKeys []string
+	keyToOrder := make(map[string]int)
 	amalgomators := configMapSlice[1].Value.(yaml.MapSlice)
-	for _, mapItem := range amalgomators {
-		orderedKeys = append(orderedKeys, mapItem.Key.(string))
+	for i, mapItem := range amalgomators {
+		keyToOrder[mapItem.Key.(string)] = i
 	}
 
 	v0Cfg := v0.Config{}
-	v0Cfg.OrderedKeys = orderedKeys
 	if len(legacyCfg.Amalgomators) > 0 {
 		v0Cfg.Amalgomators = make(map[string]v0.ProductConfig)
 		for k, v := range legacyCfg.Amalgomators {
 			v0Cfg.Amalgomators[k] = v0.ProductConfig{
+				Order:     keyToOrder[k],
 				Config:    v.Config,
 				OutputDir: v.OutputDir,
 				Pkg:       v.Pkg,
