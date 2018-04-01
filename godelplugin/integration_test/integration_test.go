@@ -43,16 +43,14 @@ amalgomators:
 				Legacy:     true,
 				WantOutput: "Upgraded configuration for amalgomate-plugin.yml\n",
 				WantFiles: map[string]string{
-					"godel/config/amalgomate-plugin.yml": `ordered-keys:
-- test-product
-- next-product
-- other-product
-amalgomators:
+					"godel/config/amalgomate-plugin.yml": `amalgomators:
   next-product:
+    order: 1
     config: next.yml
     output-dir: next-output
     pkg: next-pkg
   other-product:
+    order: 2
     config: other.yml
     output-dir: other-output
     pkg: other-pkg
@@ -66,21 +64,20 @@ amalgomators:
 			{
 				Name: "current config is unmodified",
 				ConfigFiles: map[string]string{
-					"godel/config/amalgomate-plugin.yml": `
-ordered-keys:
-  - test-product
-  - next-product
-  - other-product
-amalgomators:
+					"godel/config/amalgomate-plugin.yml": `amalgomators:
+  # comment
   test-product:
+    order: 0
     config: test.yml
     output-dir: test-output
     pkg: test-pkg
   next-product:
+    order: 1
     config: next.yml
     output-dir: next-output
     pkg: next-pkg
   other-product:
+    order: 2
     config: other.yml
     output-dir: other-output
     pkg: other-pkg
@@ -88,21 +85,20 @@ amalgomators:
 				},
 				WantOutput: "",
 				WantFiles: map[string]string{
-					"godel/config/amalgomate-plugin.yml": `
-ordered-keys:
-  - test-product
-  - next-product
-  - other-product
-amalgomators:
+					"godel/config/amalgomate-plugin.yml": `amalgomators:
+  # comment
   test-product:
+    order: 0
     config: test.yml
     output-dir: test-output
     pkg: test-pkg
   next-product:
+    order: 1
     config: next.yml
     output-dir: next-output
     pkg: next-pkg
   other-product:
+    order: 2
     config: other.yml
     output-dir: other-output
     pkg: other-pkg

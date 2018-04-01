@@ -23,10 +23,12 @@ amalgomators:
     output-dir: test-output
     pkg: test-pkg
   next-product:
+    order: 1
     config: next.yml
     output-dir: next-output
     pkg: next-pkg
   other-product:
+    order: 2
     config: other.yml
     output-dir: other-output
     pkg: other-pkg
@@ -43,11 +45,13 @@ amalgomators:
 				Pkg:       "test-pkg",
 			},
 			"next-product": {
+				Order:     1,
 				Config:    "next.yml",
 				OutputDir: "next-output",
 				Pkg:       "next-pkg",
 			},
 			"other-product": {
+				Order:     2,
 				Config:    "other.yml",
 				OutputDir: "other-output",
 				Pkg:       "other-pkg",
@@ -61,6 +65,7 @@ func TestToParam(t *testing.T) {
 	cfg := config.Config{
 		Amalgomators: config.ToAmalgomators(map[string]config.ProductConfig{
 			"test-product": {
+				Order:     -1,
 				Config:    "test.yml",
 				OutputDir: "test-output",
 				Pkg:       "test-pkg",
@@ -79,6 +84,11 @@ func TestToParam(t *testing.T) {
 	}
 
 	wantParam := amalgomateplugin.Param{
+		OrderedKeys: []string{
+			"test-product",
+			"next-product",
+			"other-product",
+		},
 		Amalgomators: map[string]amalgomateplugin.ProductParam{
 			"test-product": {
 				Config:    "test.yml",
@@ -97,7 +107,6 @@ func TestToParam(t *testing.T) {
 			},
 		},
 	}
-	param, err := cfg.ToParam()
-	require.NoError(t, err)
-	assert.Equal(t, wantParam, param)
+	gotParam := cfg.ToParam()
+	assert.Equal(t, wantParam, gotParam)
 }

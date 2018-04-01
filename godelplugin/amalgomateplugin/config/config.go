@@ -5,10 +5,7 @@
 package config
 
 import (
-	"fmt"
 	"sort"
-
-	"github.com/pkg/errors"
 
 	"github.com/palantir/amalgomate/godelplugin/amalgomateplugin"
 	"github.com/palantir/amalgomate/godelplugin/amalgomateplugin/config/internal/v0"
@@ -16,56 +13,34 @@ import (
 
 type Config v0.Config
 
-func (cfg *Config) ToParam() (amalgomateplugin.Param, error) {
-	if len(cfg.OrderedKeys) != 0 {
-		// verify that ordered keys configuration is valid (return error if not)
-		specified := make(map[string]struct{})
-		var extra []string
-
-		for _, key := range cfg.OrderedKeys {
-			if _, ok := cfg.Amalgomators[key]; !ok {
-				// key in OrderedKeys is not valid
-				extra = append(extra, key)
-				continue
-			}
-			specified[key] = struct{}{}
-		}
-
-		var missing []string
-		for k := range cfg.Amalgomators {
-			if _, ok := specified[k]; !ok {
-				missing = append(missing, k)
-			}
-		}
-		sort.Strings(missing)
-
-		if len(extra) > 0 || len(missing) > 0 {
-			msg := "OrderedKeys was specified in configuration but had issues:"
-			if len(missing) > 0 {
-				msg += fmt.Sprintf(" missing key(s) %v", missing)
-				if len(extra) > 0 {
-					msg += ","
-				}
-			}
-			if len(extra) > 0 {
-				msg += fmt.Sprintf(" invalid key(s) %v", extra)
-			}
-			return amalgomateplugin.Param{}, errors.Errorf(msg)
-		}
-	}
-
+func (cfg *Config) ToParam() amalgomateplugin.Param {
 	if len(cfg.Amalgomators) == 0 {
-		return amalgomateplugin.Param{}, nil
+		return amalgomateplugin.Param{}
 	}
-	p := amalgomateplugin.Param{
-		OrderedKeys:  cfg.OrderedKeys,
-		Amalgomators: make(map[string]amalgomateplugin.ProductParam),
+
+	var orderedKeys []string
+	for k := range cfg.Amalgomators {
+		orderedKeys = append(orderedKeys, k)
 	}
+	sort.Slice(orderedKeys, func(i, j int) bool {
+		o1 := cfg.Amalgomators[orderedKeys[i]].Order
+		o2 := cfg.Amalgomators[orderedKeys[j]].Order
+		if o1 != o2 {
+			return o1 < o2
+		}
+		// if order is tied, fall back on string comparison
+		return orderedKeys[i] < orderedKeys[j]
+	})
+
+	amalgomators := make(map[string]amalgomateplugin.ProductParam)
 	for k, v := range cfg.Amalgomators {
 		v := ProductConfig(v)
-		p.Amalgomators[k] = v.ToParam()
+		amalgomators[k] = v.ToParam()
 	}
-	return p, nil
+	return amalgomateplugin.Param{
+		OrderedKeys:  orderedKeys,
+		Amalgomators: amalgomators,
+	}
 }
 
 func ToAmalgomators(in map[string]ProductConfig) map[string]v0.ProductConfig {
