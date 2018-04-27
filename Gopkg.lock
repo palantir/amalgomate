@@ -33,7 +33,7 @@
   branch = "master"
   name = "github.com/palantir/pkg"
   packages = ["cobracli"]
-  revision = "15f6fc0c684b2603c4e75a02ca132e5c434c7297"
+  revision = "23395ebeee5df1083443a6261e5f674a76af91b6"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -50,8 +50,8 @@
 [[projects]]
   name = "github.com/spf13/cobra"
   packages = ["."]
-  revision = "7b2c5ac9fc04fc5efafb60700713d4fa609b777b"
-  version = "v0.0.1"
+  revision = "a1f051bc3eba734da4772d60e2d677f47cf93ef4"
+  version = "v0.0.2"
 
 [[projects]]
   name = "github.com/spf13/pflag"

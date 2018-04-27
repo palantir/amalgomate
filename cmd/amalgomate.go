@@ -8,7 +8,7 @@ import (
 	"github.com/palantir/pkg/cobracli"
 	"github.com/spf13/cobra"
 
-	"github.com/palantir/amalgomate/cmd/amalgomate"
+	"github.com/palantir/amalgomate/amalgomate"
 )
 
 const (
@@ -19,10 +19,10 @@ const (
 )
 
 var (
-	debug     bool
-	config    string
-	outputDir string
-	pkgFlag   string
+	debugFlagVal  bool
+	configFlagVal string
+	outputDirVal  string
+	pkgFlagVal    string
 )
 
 // AmalgomateCmd represents the base command when called without any subcommands
@@ -55,32 +55,32 @@ This invocation would amalgomate the inputs specified in "config.yml" and would
 write the generated source into the "generated_src" directory with the package
 name "amalgomated".`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := amalgomate.LoadConfig(config)
+		cfg, err := amalgomate.LoadConfig(configFlagVal)
 		if err != nil {
 			return err
 		}
-		return amalgomate.Run(cfg, outputDir, pkgFlag)
+		return amalgomate.Run(cfg, outputDirVal, pkgFlagVal)
 	},
 }
 
 func Execute() int {
-	return cobracli.ExecuteWithDefaultParams(AmalgomateCmd, &debug)
+	return cobracli.ExecuteWithDebugVarAndDefaultParams(AmalgomateCmd, &debugFlagVal)
 }
 
 func init() {
-	AmalgomateCmd.Flags().BoolVar(&debug, debugFlagName, false, "run in debug mode")
+	AmalgomateCmd.Flags().BoolVar(&debugFlagVal, debugFlagName, false, "run in debugFlagVal mode")
 
-	AmalgomateCmd.Flags().StringVar(&config, configFlagName, "", "configuration file that specifies packages to be amalgomated")
+	AmalgomateCmd.Flags().StringVar(&configFlagVal, configFlagName, "", "configuration file that specifies packages to be amalgomated")
 	if err := AmalgomateCmd.MarkFlagRequired(configFlagName); err != nil {
 		panic(err)
 	}
 
-	AmalgomateCmd.Flags().StringVar(&outputDir, outputDirFlagName, "", "directory in which amalgomated output is written")
+	AmalgomateCmd.Flags().StringVar(&outputDirVal, outputDirFlagName, "", "directory in which amalgomated output is written")
 	if err := AmalgomateCmd.MarkFlagRequired(outputDirFlagName); err != nil {
 		panic(err)
 	}
 
-	AmalgomateCmd.Flags().StringVar(&pkgFlag, pkgFlagName, "", "package name of the amalgomated source that is generated")
+	AmalgomateCmd.Flags().StringVar(&pkgFlagVal, pkgFlagName, "", "package name of the amalgomated source that is generated")
 	if err := AmalgomateCmd.MarkFlagRequired(pkgFlagName); err != nil {
 		panic(err)
 	}
