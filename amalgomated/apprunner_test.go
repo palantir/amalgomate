@@ -16,12 +16,6 @@ import (
 	"github.com/palantir/amalgomate/amalgomated"
 )
 
-type cmdString string
-
-func (s cmdString) Name() string {
-	return string(s)
-}
-
 func TestRunApp(t *testing.T) {
 	for i, currCase := range []struct {
 		args             []string

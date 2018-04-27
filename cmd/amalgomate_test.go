@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
-	"github.com/palantir/amalgomate/cmd/amalgomate"
+	"github.com/palantir/amalgomate/amalgomate"
 )
 
 const internalDir = "internal"
