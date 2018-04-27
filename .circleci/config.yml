@@ -1,7 +1,7 @@
 docker-image: &docker-image
   working_directory: /go/src/github.com/palantir/amalgomate
   docker:
-    - image: golang:1.9.2
+    - image: golang:1.10.1
 
 go-version: &go-version
   run: go version
