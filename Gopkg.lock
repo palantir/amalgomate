@@ -25,7 +25,7 @@
   packages = [
     "dirs",
     "errorstringer",
-    "gofiles"
+    "gofiles",
   ]
   revision = "b64318170fdef93b4462420e0badef8050dbb7ec"
 
@@ -63,7 +63,7 @@
   name = "github.com/stretchr/testify"
   packages = [
     "assert",
-    "require"
+    "require",
   ]
   revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
   version = "v1.2.1"
