@@ -25,19 +25,9 @@
   packages = [
     "dirs",
     "errorstringer",
-    "gofiles",
+    "gofiles"
   ]
   revision = "b64318170fdef93b4462420e0badef8050dbb7ec"
-
-[[projects]]
-  name = "github.com/palantir/amalgomate"
-  packages = [
-    "amalgomate",
-    "amalgomated",
-    "cmd",
-  ]
-  revision = "30f244ddb09b34a21ae32167d68fdd41652a22d4"
-  version = "1.4.0"
 
 [[projects]]
   branch = "master"
@@ -73,7 +63,7 @@
   name = "github.com/stretchr/testify"
   packages = [
     "assert",
-    "require",
+    "require"
   ]
   revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
   version = "v1.2.1"
@@ -99,6 +89,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b506caa9ba38d37cdffc9f42279d6df6aa8e23a5d835910b15afa48f7cad0761"
+  inputs-digest = "c6ceb16c70fe017b4eb37f5a9863d0235b18d9c6765888a6bd712a4babf0a90a"
   solver-name = "gps-cdcl"
   solver-version = 1
