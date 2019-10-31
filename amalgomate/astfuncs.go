@@ -180,7 +180,7 @@ func repackage(config Config, outputDir string) error {
 
 		for currGoFile, currNode := range goFiles {
 			if err = writeAstToFile(currGoFile, currNode, fileSet); err != nil {
-				return errors.Wrapf(err, "failed to write rewritten file %s", config)
+				return errors.Wrapf(err, "failed to write rewritten file %s", currGoFile)
 			}
 		}
 
