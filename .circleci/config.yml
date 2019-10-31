@@ -28,7 +28,7 @@ workflows:
             version: 1.13.3
             <<: *owner-repo
       - godel/test:
-          name: test-go-1.13
+          name: test
           executor:
             name: go/golang
             version: 1.13.3
