@@ -1,3 +1,7 @@
+<p align="right">
+<a href="https://autorelease.general.dmz.palantir.tech/palantir/amalgomate"><img src="https://img.shields.io/badge/Perform%20an-Autorelease-success.svg" alt="Autorelease"></a>
+</p>
+
 amalgomate
 ==========
 `amalgomate` combines multiple different Go projects with `main` packages into a single Go program or library.
