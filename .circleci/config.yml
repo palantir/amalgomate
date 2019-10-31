@@ -1,61 +1,38 @@
-docker-image: &docker-image
-  working_directory: /go/src/github.com/palantir/amalgomate
-  docker:
-    - image: golang:1.10.2
+owner-repo: &owner-repo
+  owner-repo: palantir/amalgomate
 
-godel-cache-restore: &godel-cache-restore
-  restore_cache:
-    keys:
-      - &godel-cache-key godel-cache-{{ checksum "godelw" }}-{{ checksum "godel/config/godel.yml" }}-v1
-godel-cache-save: &godel-cache-save
-  save_cache:
-    key: *godel-cache-key
-    paths:
-      - ~/.godel
+version: 2.1
 
-go-version: &go-version
-  run: go version
+orbs:
+  go: palantir/go@0.0.12
+  godel: palantir/godel@0.0.11
 
-godel-version: &godel-version
-  run: ./godelw version
-
-version: 2
 jobs:
-  verify:
-    <<: *docker-image
-    steps:
-      - checkout
-      - *go-version
-      - *godel-cache-restore
-      - *godel-version
-      - *godel-cache-save
-      - run: echo 'export TESTS_DIR=/tmp/test-results' >> $BASH_ENV
-      - run: mkdir -p "${TESTS_DIR}"
-      - run: ./godelw verify --apply=false --junit-output="$TESTS_DIR/$CIRCLE_PROJECT_REPONAME-tests.xml"
-      - type: test-results-store
-        path: /tmp/test-results
-      - type: artifacts-store
-        path: /tmp/test-results
-        destination: test-results
   wiki:
-    <<: *docker-image
+    executor:
+      name: go/golang
+      version: 1.13.3
+      <<: *owner-repo
     steps:
-      - checkout
-      - *go-version
-      - *godel-cache-restore
-      - *godel-version
-      - *godel-cache-save
+      - go/setup
       - run: ./godelw github-wiki --docs-dir docs --repository=git@github.com:palantir/amalgomate.wiki.git
-
-all-tags-filter: &all-tags-filter
-  filters: { tags: { only: /.*/ } }
 
 workflows:
   version: 2
-  verify-wiki:
+  verify-test:
     jobs:
-      - verify:
-          <<: *all-tags-filter
+      - godel/verify:
+          name: verify
+          executor:
+            name: go/golang
+            version: 1.13.3
+            <<: *owner-repo
+      - godel/test:
+          name: test-go-1.13
+          executor:
+            name: go/golang
+            version: 1.13.3
+            <<: *owner-repo
       - wiki:
           requires:
             - verify
