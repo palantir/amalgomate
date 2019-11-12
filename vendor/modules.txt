@@ -1,4 +1,4 @@
-# github.com/davecgh/go-spew v1.1.0
+# github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
@@ -8,20 +8,20 @@ github.com/nmiyake/pkg/errorstringer
 github.com/nmiyake/pkg/gofiles
 # github.com/palantir/pkg v0.0.0-20180424172112-23395ebeee5d
 github.com/palantir/pkg/cobracli
-# github.com/pkg/errors v0.8.0
+# github.com/pkg/errors v0.8.1
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/spf13/cobra v0.0.2
+# github.com/spf13/cobra v0.0.5
 github.com/spf13/cobra
-# github.com/spf13/pflag v1.0.0
+# github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/stretchr/testify v1.2.1
+# github.com/stretchr/testify v1.4.0
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/termie/go-shutil v0.0.0-20140729215957-bcacb06fecae
 github.com/termie/go-shutil
 # golang.org/x/tools v0.0.0-20171129202211-36c7af334205
 golang.org/x/tools/go/ast/astutil
-# gopkg.in/yaml.v2 v2.2.0
+# gopkg.in/yaml.v2 v2.2.5
 gopkg.in/yaml.v2
