@@ -2,8 +2,6 @@
 github.com/davecgh/go-spew/spew
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
-# github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
-github.com/kardianos/osext
 # github.com/nmiyake/pkg v0.0.0-20170627000939-b64318170fde
 github.com/nmiyake/pkg/dirs
 github.com/nmiyake/pkg/errorstringer
