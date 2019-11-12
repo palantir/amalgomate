@@ -5,9 +5,9 @@
 package amalgomated
 
 import (
+	"os"
 	"os/exec"
 
-	"github.com/kardianos/osext"
 	"github.com/pkg/errors"
 )
 
@@ -84,7 +84,7 @@ func (r *wrappedCmder) Cmd(args []string, cmdWd string) *exec.Cmd {
 
 // selfCmder returns a Cmder that creates a command that re-invokes the currently running executable.
 func selfCmder() (Cmder, error) {
-	pathToSelf, err := osext.Executable()
+	pathToSelf, err := os.Executable()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to determine path for current executable")
 	}

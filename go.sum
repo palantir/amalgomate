@@ -2,8 +2,6 @@ github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/inconshreveable/mousetrap v1.0.0 h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NHg9XEKhtSvM=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
-github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 h1:PJPDf8OUfOK1bb/NeTKd4f1QXZItOX389VN3B6qC8ro=
-github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1/go.mod h1:1NbS8ALrpOvjt0rHPNLyCIeMtbizbir8U//inJ+zuB8=
 github.com/nmiyake/pkg v0.0.0-20170627000939-b64318170fde h1:mbX9O6OxpIoONUqof/PJ7sE+XALNCHwDg8fdYfwZLbU=
 github.com/nmiyake/pkg v0.0.0-20170627000939-b64318170fde/go.mod h1:1mqQ24p9iRljD6gKVkWOwMJRvbzgbyAtb0zALIt0lis=
 github.com/palantir/pkg v0.0.0-20180424172112-23395ebeee5d h1:SDo87EmYVRxe4yGSNuausiZ/ykevqJ8gP8aeEuABW3Y=
