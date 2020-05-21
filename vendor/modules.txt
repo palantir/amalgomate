@@ -8,7 +8,9 @@ github.com/nmiyake/pkg/dirs
 github.com/nmiyake/pkg/errorstringer
 # github.com/nmiyake/pkg/gofiles v1.0.0
 github.com/nmiyake/pkg/gofiles
-# github.com/palantir/pkg/cobracli v1.0.0
+# github.com/palantir/pkg v1.0.1
+github.com/palantir/pkg
+# github.com/palantir/pkg/cobracli v1.0.1
 github.com/palantir/pkg/cobracli
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors

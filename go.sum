@@ -21,8 +21,10 @@ github.com/nmiyake/pkg/errorstringer v1.0.0 h1:i8VFMHpy2orAs8Lsoi7wOdQ6ipxOUe9GR
 github.com/nmiyake/pkg/errorstringer v1.0.0/go.mod h1:M7rsuKy+fiW7j812cNTScqf7kixe7k/ETY/+cbaqzRw=
 github.com/nmiyake/pkg/gofiles v1.0.0 h1:I/0ZHRThFID/qpt3xySNV7AkEGyg1QABQrMT00vwXmw=
 github.com/nmiyake/pkg/gofiles v1.0.0/go.mod h1:F+0i7sA0xTtovYCTcEutbEbFbW2vAQMm2cyHcXFpAok=
-github.com/palantir/pkg/cobracli v1.0.0 h1:hhkWxrqRdsXM6mMbXovVnUrZRitmKNu8SgC+XQP9kzI=
-github.com/palantir/pkg/cobracli v1.0.0/go.mod h1:AneQq9QEiEHnx61jDASdobjCwKKSkWLVVsyoMpgmy74=
+github.com/palantir/pkg v1.0.1 h1:ZbGUcc14N7xcZSY9cehQoiHHTm/BAZO5RJdlsNEtSbk=
+github.com/palantir/pkg v1.0.1/go.mod h1:Eo6Jl0UXfT+65sLXJOcU9duu0WPvKsWFXCb0dE5VWZs=
+github.com/palantir/pkg/cobracli v1.0.1 h1:RLAL+bWRcFVqX1XHDQZp6V2vZYN483U0HE9dhp2W+WQ=
+github.com/palantir/pkg/cobracli v1.0.1/go.mod h1:UfYLriXzhyx7a3r+3UTD+kbX+xASjr9kSK05fC85NyI=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
