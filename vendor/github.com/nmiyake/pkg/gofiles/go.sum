@@ -1,7 +1,9 @@
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/nmiyake/pkg/dirs v1.0.0 h1:pYeIw1wH7jh5/ew8naGE4Q56byJG7Uyi8PwwhVe/MTg=
-github.com/nmiyake/pkg/dirs v1.0.0/go.mod h1:r6/PkZ3CA1szGfQkxcHheEjBWi6Zu6jLb+lQmRXEyvM=
+github.com/nmiyake/pkg v1.0.0 h1:HLaVYtHDMpgvKKudovOE4lFaiudQNL+8Imr89hWrSZg=
+github.com/nmiyake/pkg v1.0.0/go.mod h1:078BHtQj5Tk8Im6EpMHR0/Stp79lwL3FIRiGaC9hTDM=
+github.com/nmiyake/pkg/dirs v1.0.2 h1:2jrnpKNO6q2fiflC0w8hobPurGOHRlhzyWAjJx7OpNo=
+github.com/nmiyake/pkg/dirs v1.0.2/go.mod h1:fVEsJ8Y8gFb14mbXq4iFQgzR19mMLEKA/lX3Y7Ccl3w=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
