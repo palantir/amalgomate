@@ -1,0 +1,13 @@
+type: feature
+feature:
+  description: |-
+    Updates amalgomate to operate on modules.
+
+    * Determine files to copy based on module information
+    * Rewrite imports based on module information
+    * Remove configuration values that are no longer relevant in module mode
+
+    After this change, amalgomate no longer supports amalgomating packages
+    that are not part of a declared module.
+  links:
+  - https://github.com/palantir/amalgomate/pull/93
