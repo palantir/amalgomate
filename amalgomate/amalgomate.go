@@ -36,10 +36,8 @@ func Run(cfg Config, outputDir, pkg string) error {
 		return errors.Wrapf(err, "failed to repackage files specified in configuration")
 	}
 
-	amalgomatedOutputDir := path.Join(outputDir, internalDir)
-
 	// write output file that imports and uses repackaged files
-	if err := writeOutputGoFile(cfg, outputDir, amalgomatedOutputDir, pkg); err != nil {
+	if err := writeOutputGoFile(cfg, outputDir, pkg); err != nil {
 		return errors.Wrapf(err, "failed to write output file")
 	}
 
@@ -124,7 +122,7 @@ func (a *amalgomated) Cmds() []string {
 `
 )
 
-func writeOutputGoFile(config Config, outputDir, amalgomatedOutputDir, packageName string) error {
+func writeOutputGoFile(config Config, outputDir, packageName string) error {
 	fileSet := token.NewFileSet()
 
 	var template string
@@ -140,7 +138,7 @@ func writeOutputGoFile(config Config, outputDir, amalgomatedOutputDir, packageNa
 	}
 	file.Name = ast.NewIdent(packageName)
 
-	if err := addImports(file, fileSet, amalgomatedOutputDir, config); err != nil {
+	if err := addImports(file, fileSet, outputDir, config); err != nil {
 		return errors.Wrap(err, "failed to add imports")
 	}
 	sortImports(file)
@@ -157,7 +155,7 @@ func writeOutputGoFile(config Config, outputDir, amalgomatedOutputDir, packageNa
 	outputWithSpaces := addImportSpaces(&byteBuffer, importBreakPaths(file))
 
 	// write output to file
-	outputFilePath := path.Join(outputDir, packageName+".go")
+	outputFilePath := filepath.Join(outputDir, packageName+".go")
 	if err := ioutil.WriteFile(outputFilePath, outputWithSpaces, 0644); err != nil {
 		return errors.Wrapf(err, "failed to write output to path: %s", outputFilePath)
 	}
