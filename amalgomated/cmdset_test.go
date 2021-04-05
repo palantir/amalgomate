@@ -7,10 +7,9 @@ package amalgomated_test
 import (
 	"testing"
 
+	"github.com/palantir/amalgomate/amalgomated"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/palantir/amalgomate/amalgomated"
 )
 
 func TestNewCmdWithRunner(t *testing.T) {

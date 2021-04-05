@@ -5,10 +5,9 @@
 package cmd
 
 import (
+	"github.com/palantir/amalgomate/amalgomate"
 	"github.com/palantir/pkg/cobracli"
 	"github.com/spf13/cobra"
-
-	"github.com/palantir/amalgomate/amalgomate"
 )
 
 const (

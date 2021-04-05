@@ -10,10 +10,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/palantir/amalgomate/amalgomated"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/palantir/amalgomate/amalgomated"
 )
 
 func TestRunApp(t *testing.T) {
