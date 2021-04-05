@@ -9,10 +9,9 @@ import (
 	"os/exec"
 	"testing"
 
+	"github.com/palantir/amalgomate/amalgomated"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/palantir/amalgomate/amalgomated"
 )
 
 type testCmder exec.Cmd
