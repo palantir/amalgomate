@@ -14,31 +14,29 @@ packages:
     main: github.com/kisielk/errcheck
   golint:
     main: github.com/golang/lint/golint
-    distance-to-project-pkg: 1
   govet:
     main: github.com/nmiyake/govet
   ineffassign:
     main: github.com/gordonklaus/ineffassign
   outparamcheck:
     main: github.com/palantir/outparamcheck/main/outparamcheck
-    distance-to-project-pkg: 2
   unconvert:
     main: github.com/mdempsky/unconvert
   varcheck:
-    main: github.com/opennota/check/cmd/varcheck
+    main: gitlab.com/opennota/check/cmd/varcheck
 ```
 
 When `amalgomate` is run, it does the following:
 
-* Finds all of the source for the package based on its import path
-* Copies the source to an internal directory within the project
-* Programmatically re-writes the "main" package into a library package called `amalgomated` and re-writes the `main`
+* Determines the module for the specified main package
+* Copies the module source to an internal directory within the project
+* Programmatically rewrites the "main" package into a library package called `amalgomated` and rewrites the `main`
   function to be `AmalgomatedMain` so that it is exported and callable
 * Finds any imported instances of packages that are known to store shared global state initialized on package load (such
-  as the Go built-in `flag` package), creates a copy of those libraries for the re-written program and updates the
+  as the Go built-in `flag` package), creates a copy of those libraries for the rewritten program and updates the
   imports of the program to use the copied library
   * This ensures that any global state that is set on package load is properly preserved
-* Creates a new library file that provides an entry point to call all of the re-packaged programs
+* Creates a new library file that provides an entry point to call all the re-packaged programs
   * Only this library is exported, which shields the state of the re-packaged programs from other programs
 
 The final product is a programmatically generated set of source files that can be compiled into a single program. The

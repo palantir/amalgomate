@@ -7,8 +7,6 @@ package amalgomate
 import (
 	"fmt"
 	"go/ast"
-	"go/build"
-	"go/parser"
 	"go/printer"
 	"go/token"
 	"io/ioutil"
@@ -16,13 +14,11 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 
-	"github.com/nmiyake/pkg/dirs"
 	"github.com/pkg/errors"
-	"github.com/termie/go-shutil"
 	"golang.org/x/tools/go/ast/astutil"
+	"golang.org/x/tools/go/packages"
 )
 
 const (
@@ -31,11 +27,11 @@ const (
 	internalDir        = "internal"
 )
 
-// repackage repackages the main package specified in the provided configuration and re-writes them into the provided
-// output directory. The repackaged files are placed into a directory called "vendor" that is created in the provided
-// directory. This function assumes and verifies that the provided "outputDir" is a directory that exists. The provided
-// configuration is processed based on the natural ordering of the name of the commands. If multiple commands specify
-// the same package, it is only processed for the first command.
+// repackage repackages the module for the main package specified in the provided configuration and writes the
+// repackaged files into the provided output directory. The repackaged files are placed into a directory called
+// "internal" that is created in the provided directory. This function assumes and verifies that the provided
+// "outputDir" is a directory that exists. The provided configuration is processed based on the natural ordering of the
+// name of the commands.
 func repackage(config Config, outputDir string) error {
 	if outputDirInfo, err := os.Stat(outputDir); err != nil {
 		return errors.Wrapf(err, "failed to stat output directory: %s", outputDir)
@@ -43,171 +39,46 @@ func repackage(config Config, outputDir string) error {
 		return errors.Wrapf(err, "not a directory: %s", outputDir)
 	}
 
-	vendorDir := path.Join(outputDir, internalDir)
+	internalDir := filepath.Join(outputDir, internalDir)
 	// remove output directory if it already exists
-	if err := os.RemoveAll(vendorDir); err != nil {
-		return errors.Wrapf(err, "failed to remove directory: %s", vendorDir)
+	if err := os.RemoveAll(internalDir); err != nil {
+		return errors.Wrapf(err, "failed to remove directory: %s", internalDir)
 	}
 
-	if err := os.Mkdir(vendorDir, 0755); err != nil {
-		return errors.Wrapf(err, "failed to create %s directory at %s", internalDir, vendorDir)
+	if err := os.Mkdir(internalDir, 0755); err != nil {
+		return errors.Wrapf(err, "failed to create %s directory at %s", internalDir, internalDir)
 	}
 
-	processedPkgs := make(map[SrcPkg]bool, len(config.Pkgs))
-	for _, currName := range sortedKeys(config.Pkgs) {
-		currPkg := config.Pkgs[currName]
+	projectModuleInfo, err := moduleInfoForDirectory(outputDir)
+	if err != nil {
+		return errors.Wrapf(err, "failed to determine module for directory %s", outputDir)
+	}
 
-		// if multiple keys specify the exact same source package, only process once
-		if processedPkgs[currPkg] {
-			continue
-		}
+	relPathFromModuleToOutputDir, err := relpathNormalizedPaths(projectModuleInfo.Dir, internalDir)
+	if err != nil {
+		return err
+	}
 
-		mainPkg, err := build.Import(currPkg.MainPkg, outputDir, build.FindOnly)
+	for _, currConfigKey := range sortedKeys(config.Pkgs) {
+		currMainPkg := config.Pkgs[currConfigKey]
+
+		currMainPkgModule, err := moduleInfoForPackage(currMainPkg.MainPkg, outputDir)
 		if err != nil {
-			return errors.Wrapf(err, "failed to get information for package %s for output directory %s", currPkg.MainPkg, outputDir)
+			return errors.Wrapf(err, "failed to determine module for main package")
 		}
 
-		// get location of main package on disk
-		mainDir := mainPkg.Dir
-
-		// get project import path and location of project package directory
-		projectRootDir := mainDir
-		projectImportPath := currPkg.MainPkg
-		for i := 0; i < currPkg.DistanceToProjectPkg; i++ {
-			projectRootDir = path.Dir(projectRootDir)
-			projectImportPath = path.Dir(projectImportPath)
+		if currMainPkgModule.Path == projectModuleInfo.Path {
+			return errors.Errorf("module for package %s was reported as %s, which is the same as the project module: it is likely that this package is not part of a real module, and repackaging non-modules is not supported", currMainPkg.MainPkg, currMainPkgModule.Path)
 		}
 
-		// copy project package into vendor directory in output dir if it does not already exist
-		projectDstDir := path.Join(vendorDir, projectImportPath)
-
-		if _, err := os.Stat(projectDstDir); os.IsNotExist(err) {
-			if err := shutil.CopyTree(projectRootDir, projectDstDir, vendorCopyOptions(currPkg.OmitVendorDirs)); err != nil {
-				return errors.Wrapf(err, "failed to copy directory %s to %s", projectRootDir, projectDstDir)
-			}
-			if _, err := removeEmptyDirs(projectDstDir); err != nil {
-				return errors.Wrapf(err, "failed to remove empty directories in destination %s", projectDstDir)
-			}
-		} else if err != nil {
-			return errors.Wrapf(err, "failed to stat %s", projectDstDir)
+		if err := copyModuleRecursively(currMainPkgModule.Path, currMainPkgModule.Dir, filepath.Join(projectModuleInfo.Dir, relPathFromModuleToOutputDir)); err != nil {
+			return errors.Wrapf(err, "failed to copy module")
 		}
-
-		projectDstDirImport, err := build.ImportDir(projectDstDir, build.FindOnly)
-		if err != nil {
-			return errors.Wrapf(err, "unable to import project destination directory %s", projectDstDir)
+		if err := rewriteImports(internalDir, currMainPkgModule.Path, path.Join(projectModuleInfo.Path, relPathFromModuleToOutputDir)); err != nil {
+			return errors.Wrapf(err, "failed to rewrite imports for module %+v", currMainPkgModule)
 		}
-		projectDstDirImportPath := projectDstDirImport.ImportPath
-
-		// rewrite imports for all files in copied directory
-		fileSet := token.NewFileSet()
-		foundMain := false
-		goFiles := make(map[string]*ast.File)
-
-		flagPkgImported := false
-		if err := filepath.Walk(projectDstDir, func(currPath string, currInfo os.FileInfo, err error) error {
-			if !currInfo.IsDir() && strings.HasSuffix(currInfo.Name(), ".go") {
-				fileNode, err := parser.ParseFile(fileSet, currPath, nil, parser.ParseComments)
-				if err != nil {
-					return errors.Wrapf(err, "failed to parse file %s", currPath)
-				}
-				goFiles[currPath] = fileNode
-
-				for _, currImport := range fileNode.Imports {
-					currImportPathUnquoted, err := strconv.Unquote(currImport.Path.Value)
-					if err != nil {
-						return errors.Wrapf(err, "unable to unquote import %s", currImport.Path.Value)
-					}
-
-					updatedImport := ""
-					if currImportPathUnquoted == "flag" {
-						flagPkgImported = true
-						updatedImport = path.Join(projectDstDirImportPath, "amalgomated_flag")
-					} else if strings.HasPrefix(currImportPathUnquoted, projectImportPath) {
-						updatedImport = strings.Replace(currImportPathUnquoted, projectImportPath, projectDstDirImportPath, -1)
-					}
-
-					if updatedImport != "" {
-						if !astutil.RewriteImport(fileSet, fileNode, currImportPathUnquoted, updatedImport) {
-							return errors.Errorf("failed to rewrite import from %s to %s", currImportPathUnquoted, updatedImport)
-						}
-					}
-				}
-
-				removeImportPathChecking(fileNode)
-
-				// change package name for main packages
-				if fileNode.Name.Name == "main" {
-					fileNode.Name = ast.NewIdent(amalgomatedPackage)
-
-					// find the main function
-					mainFunc := findFunction(fileNode, "main")
-					if mainFunc != nil {
-						err = renameFunction(fileNode, "main", amalgomatedMain)
-						if err != nil {
-							return errors.Wrapf(err, "failed to rename function in file %s", currPath)
-						}
-						foundMain = true
-					}
-				}
-			}
-			return nil
-		}); err != nil {
-			return err
-		}
-
-		if !foundMain {
-			return errors.Errorf("main method not found in package %s", currPkg.MainPkg)
-		}
-
-		if flagPkgImported {
-			// if "flag" package is imported, add "flag" as a rewritten vendored dependency. This is done
-			// because flag.CommandLine is a global variable that is often used by programs and problems can
-			// arise if multiple amalgomated programs use it. A custom rewritten import is used rather than
-			// vendoring so that the amalgomated program can itself be vendored.
-			goRoot, err := dirs.GoRoot()
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			fmtSrcDir := path.Join(goRoot, "src", "flag")
-			fmtDstDir := path.Join(projectDstDir, "amalgomated_flag")
-			if err := shutil.CopyTree(fmtSrcDir, fmtDstDir, vendorCopyOptions(currPkg.OmitVendorDirs)); err != nil {
-				return errors.Wrapf(err, "failed to copy directory %s to %s", fmtSrcDir, fmtDstDir)
-			}
-			if _, err := removeEmptyDirs(fmtDstDir); err != nil {
-				return errors.Wrapf(err, "failed to remove empty directories in destination %s", fmtDstDir)
-			}
-		}
-
-		for currGoFile, currNode := range goFiles {
-			if err = writeAstToFile(currGoFile, currNode, fileSet); err != nil {
-				return errors.Wrapf(err, "failed to write rewritten file %s", currGoFile)
-			}
-		}
-
-		processedPkgs[currPkg] = true
 	}
 	return nil
-}
-
-func vendorCopyOptions(skipVendorDirs bool) *shutil.CopyTreeOptions {
-	return &shutil.CopyTreeOptions{
-		Ignore: func(dir string, infos []os.FileInfo) []string {
-			// ignore non-go files, go test files and testdata directories
-			var ignore []string
-			for _, currInfo := range infos {
-				isHidden := strings.HasPrefix(currInfo.Name(), ".")
-				isTestDataDir := currInfo.IsDir() && currInfo.Name() == "testdata"
-				notGoFile := !currInfo.IsDir() && !strings.HasSuffix(currInfo.Name(), ".go")
-				goTestFile := !currInfo.IsDir() && strings.HasSuffix(currInfo.Name(), "_test.go")
-				isVendorDir := currInfo.IsDir() && currInfo.Name() == "vendor"
-				if isHidden || isTestDataDir || notGoFile || goTestFile || (skipVendorDirs && isVendorDir) {
-					ignore = append(ignore, currInfo.Name())
-				}
-			}
-			return ignore
-		},
-		CopyFunction: shutil.Copy,
-	}
 }
 
 // removeEmptyDirs removes all directories in rootDir (including the root directory itself) that are empty or contain
@@ -267,23 +138,28 @@ func removeImportPathChecking(fileNode *ast.File) {
 	fileNode.Comments = newCgList
 }
 
-func addImports(file *ast.File, fileSet *token.FileSet, amalgomatedOutputDir string, config Config) error {
+func addImports(file *ast.File, fileSet *token.FileSet, outputDir string, config Config) error {
+	projectModule, err := moduleInfoForDirectory(outputDir)
+	if err != nil {
+		return errors.Wrapf(err, "failed to determine module for directory %s", outputDir)
+	}
+
+	pathFromProjectModuleToOutputDir, err := relpathNormalizedPaths(projectModule.Dir, outputDir)
+	if err != nil {
+		return err
+	}
+
 	processedPkgs := make(map[SrcPkg]bool, len(config.Pkgs))
 	for _, name := range sortedKeys(config.Pkgs) {
 		progPkg := config.Pkgs[name]
 
-		// if package has already been imported, skip (can't have multiple imports for the same package)
-		if processedPkgs[progPkg] {
-			continue
-		}
-
-		repackagedDirPath := path.Join(amalgomatedOutputDir, progPkg.MainPkg)
-		repackagedDirImportResult, err := build.ImportDir(repackagedDirPath, build.FindOnly)
+		mainPkgInfo, err := packageForPatternInDirectory(progPkg.MainPkg, outputDir, packages.NeedName|packages.NeedFiles)
 		if err != nil {
-			return errors.Wrapf(err, "failed to import directory %s", repackagedDirPath)
+			return errors.Wrapf(err, "failed to get package information")
 		}
 
-		repackagedImportPath := repackagedDirImportResult.ImportPath
+		// repackaged import path is the project module import path + path to the output directory + internalDir + main package import path
+		repackagedImportPath := path.Join(projectModule.Path, pathFromProjectModuleToOutputDir, internalDir, mainPkgInfo.PkgPath)
 		added := astutil.AddNamedImport(fileSet, file, name, repackagedImportPath)
 		if !added {
 			return errors.Errorf("failed to add import %s", repackagedImportPath)
@@ -291,6 +167,25 @@ func addImports(file *ast.File, fileSet *token.FileSet, amalgomatedOutputDir str
 		processedPkgs[progPkg] = true
 	}
 	return nil
+}
+
+// relpathNormalizedPaths makes targpath relative to basepath using filepath.Rel after normalizing both inputs using
+// filepath.EvalSymLinks.
+func relpathNormalizedPaths(basepath, targpath string) (string, error) {
+	normalizedBase, err := filepath.EvalSymlinks(basepath)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to normalize %s", basepath)
+	}
+	normalizedTarget, err := filepath.EvalSymlinks(targpath)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to normalize %s", targpath)
+	}
+
+	relPath, err := filepath.Rel(normalizedBase, normalizedTarget)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to make %s relative to %s", normalizedTarget, normalizedBase)
+	}
+	return relPath, nil
 }
 
 func sortImports(file *ast.File) {

@@ -11,14 +11,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type SrcPkg struct {
-	MainPkg              string `yaml:"main"`
-	DistanceToProjectPkg int    `yaml:"distance-to-project-pkg"`
-	OmitVendorDirs       bool   `yaml:"omit-vendor-dirs"`
-}
-
 type Config struct {
 	Pkgs map[string]SrcPkg `yaml:"packages"`
+}
+
+type SrcPkg struct {
+	MainPkg string `yaml:"main"`
 }
 
 func LoadConfig(configPath string) (Config, error) {
