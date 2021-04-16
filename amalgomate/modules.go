@@ -280,7 +280,7 @@ type GoModInfo struct {
 }
 
 func moduleInfoForDirectory(dir string) (*GoModInfo, error) {
-	goListCmd := exec.Command("go", "list", "-m", "-json")
+	goListCmd := exec.Command("go", "list", "-mod=readonly", "-m", "-json")
 	goListCmd.Dir = dir
 	output, err := goListCmd.CombinedOutput()
 	if err != nil {

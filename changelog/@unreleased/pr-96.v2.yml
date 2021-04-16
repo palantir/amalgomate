@@ -1,0 +1,8 @@
+type: fix
+fix:
+  description: |-
+    Fixes issue where "go list" could fail if performed in a module
+    inside a vendor directory that declared dependencies in its module
+    that did not match overall vendor directory.
+  links:
+  - https://github.com/palantir/amalgomate/pull/96
