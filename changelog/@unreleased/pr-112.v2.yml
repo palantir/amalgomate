@@ -1,0 +1,6 @@
+type: feature
+feature:
+  description: Updates implementation of code that performs module repackaging to
+    support vendored code that does not contain "go.mod" files (Go 1.17-style vendoring).
+  links:
+  - https://github.com/palantir/amalgomate/pull/112
