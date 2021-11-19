@@ -202,14 +202,24 @@ func copyModuleRecursively(modulePath, srcDir, dstDir string) error {
 				return fs.SkipDir
 			}
 
-			// if this is a directory, verify that it is part of the desired module. If not, do not process the
-			// directory or any of its contents.
-			currPathModulePath, err := modulePathForDirectory(path)
+			hasGoFiles, err := dirContainsGoFiles(path)
 			if err != nil {
 				return err
 			}
-			if currPathModulePath != modulePath {
-				return fs.SkipDir
+
+			// only check module of directory if it has Go files -- otherwise, module lookup won't succeed. This will
+			// result in an extra directory if all the directories within it are modules that are not the target, but
+			// there is limited downside to this.
+			if hasGoFiles {
+				// if this is a directory, verify that it is part of the desired module. If not, do not process the
+				// directory or any of its contents.
+				currPathModulePath, err := modulePathForDirectory(path)
+				if err != nil {
+					return err
+				}
+				if currPathModulePath != modulePath {
+					return fs.SkipDir
+				}
 			}
 		} else if !strings.HasSuffix(d.Name(), ".go") || strings.HasSuffix(d.Name(), "_test.go") {
 			// skip non-".go" files and "_test.go" files
@@ -241,6 +251,19 @@ func copyModuleRecursively(modulePath, srcDir, dstDir string) error {
 		return errors.Wrapf(err, "failed to walk directory %s", srcDir)
 	}
 	return nil
+}
+
+func dirContainsGoFiles(dir string) (bool, error) {
+	dirEntries, err := os.ReadDir(dir)
+	if err != nil {
+		return false, errors.Wrapf(err, "failed to list directory %s", dir)
+	}
+	for _, dirEntry := range dirEntries {
+		if strings.HasSuffix(dirEntry.Name(), ".go") {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // moduleInfoForPackage returns the GoModInfo for the package with the specified import path resolved in the provided
