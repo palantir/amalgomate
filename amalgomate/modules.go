@@ -63,6 +63,11 @@ func rewriteImports(repackagedModuleRootDir, moduleImportPath, importPathToRepac
 			}
 
 			if currImportPathUnquoted != "flag" {
+				// no need to repackage standard library packages that are not "flag"
+				if inStandardLibrary(currImportPathUnquoted) {
+					continue
+				}
+
 				goModInfo, err := moduleInfoForPackage(currImportPathUnquoted, repackagedModuleRootDir)
 				if err != nil {
 					return err
@@ -199,11 +204,11 @@ func copyModuleRecursively(modulePath, srcDir, dstDir string) error {
 
 			// if this is a directory, verify that it is part of the desired module. If not, do not process the
 			// directory or any of its contents.
-			currPathModule, err := moduleInfoForDirectory(path)
+			currPathModulePath, err := modulePathForDirectory(path)
 			if err != nil {
 				return err
 			}
-			if currPathModule.Path != modulePath {
+			if currPathModulePath != modulePath {
 				return fs.SkipDir
 			}
 		} else if !strings.HasSuffix(d.Name(), ".go") || strings.HasSuffix(d.Name(), "_test.go") {
@@ -245,14 +250,57 @@ func copyModuleRecursively(modulePath, srcDir, dstDir string) error {
 // local directory specified in a "replace" directive in the "go.mod" file of the module in which "dir" is located, the
 // vendor directory of the module in which "dir" is located, etc.
 func moduleInfoForPackage(pkgName, dir string) (*GoModInfo, error) {
-	outputDirPkg, err := packageForPatternInDirectory(pkgName, dir, packages.NeedName|packages.NeedFiles)
+	// get package information from package name, which should include the module information
+	outputDirPkg, err := packageForPatternInDirectory(pkgName, dir, packages.NeedName|packages.NeedFiles|packages.NeedModule)
 	if err != nil {
 		return nil, err
 	}
 	if len(outputDirPkg.GoFiles) == 0 {
 		return nil, errors.Errorf("no Go files in package %s resolved from directory %s", pkgName, dir)
 	}
-	return moduleInfoForDirectory(filepath.Dir(outputDirPkg.GoFiles[0]))
+
+	if outputDirPkg.Module == nil {
+		return nil, errors.Errorf("unable to determine module for package %s resolved from directory %s", pkgName, dir)
+	}
+
+	// determine the module for the specified package (may differ from the package because the main package for the
+	// module may not be in the root directory of the module)
+	modulePath := outputDirPkg.Module.Path
+	if modulePath == "" {
+		return nil, errors.Errorf("could not determine module for package %q in directory %q", pkgName, dir)
+	}
+
+	// if resolved module has directory field, use it
+	if outputDirPkg.Module.Dir != "" {
+		return &GoModInfo{
+			Path: modulePath,
+			Dir:  outputDirPkg.Module.Dir,
+		}, nil
+	}
+
+	// use "go list -e -json" for the module in the specified directory. Do this to determine the module directory
+	// (which may be a resolved directory like the vendor directory). So far, this seems to be the only way to reliably
+	// determine the on-disk path to the module for a package that may not have the same import path as its module.
+	// Run with the "-e" flag because this command returns an error if the specified module path does not contain any
+	// ".go" files (even if it is a valid module root). However, in this failure mode the "Path" field is still
+	// populated correctly, which is the only information that is needed.
+	goListCmd := exec.Command("go", "list", "-e", "-json", modulePath)
+	goListCmd.Dir = dir
+	output, err := goListCmd.CombinedOutput()
+	if err != nil {
+		return nil, errors.Wrapf(err, "faied to run command %v: %s", goListCmd.Args, string(output))
+	}
+	// only unmarshal "Dir" field
+	dirStruct := struct {
+		Dir string
+	}{}
+	if err := json.Unmarshal(output, &dirStruct); err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal JSON: %s", string(output))
+	}
+	return &GoModInfo{
+		Dir:  dirStruct.Dir,
+		Path: modulePath,
+	}, nil
 }
 
 // packageForPatternInDirectory returns the *package.Package loaded for the provided pattern resolved in the provided
@@ -279,6 +327,30 @@ type GoModInfo struct {
 	Dir string
 }
 
+// modulePathForDirectory returns the module path for the specified directory. The implementation of this function
+// differs from moduleInfoForDirectory because it uses package loading to determine the information rather than the
+// "go list" command run in a directory. The latter does not work for vendor directories after Go 1.17 (after which
+// go.mod files for vendored modules are no longer included). On the other hand, "moduleInfoForDirectory" cannot use
+// this implementation because the module information returned by the package lookup does not include the directory for
+// the module.
+func modulePathForDirectory(dir string) (string, error) {
+	dirPkg, err := packageForPatternInDirectory(dir, dir, packages.NeedModule)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to determine package for directory")
+	}
+	if dirPkg.Module == nil {
+		// if package lookup didn't work, then fall back on moduleInfoForDirectory
+		modInfo, err := moduleInfoForDirectory(dir)
+		if err != nil {
+			return "", errors.Wrapf(err, "failed to fall back on moduleInfoForDirectory")
+		}
+		return modInfo.Path, nil
+	}
+	return dirPkg.Module.Path, nil
+}
+
+// moduleInfoForDirectory returns the *GoModInfo for the specified directory. Returns the result of running
+// "go list -mod=readonly -m -json" using the provided directory as the working directory.
 func moduleInfoForDirectory(dir string) (*GoModInfo, error) {
 	goListCmd := exec.Command("go", "list", "-mod=readonly", "-m", "-json")
 	goListCmd.Dir = dir
