@@ -7,7 +7,7 @@ require (
 	github.com/nmiyake/pkg/gofiles v1.0.2
 	github.com/palantir/pkg/cobracli v1.2.0
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.5.0
+	github.com/spf13/cobra v1.6.0
 	github.com/stretchr/testify v1.8.0
 	github.com/termie/go-shutil v0.0.0-20140729215957-bcacb06fecae
 	golang.org/x/tools v0.1.5
@@ -16,7 +16,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/nmiyake/pkg v1.0.0 // indirect
 	github.com/nmiyake/pkg/errorstringer v1.0.0 // indirect
 	github.com/palantir/pkg v1.1.0 // indirect
