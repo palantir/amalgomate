@@ -1,0 +1,6 @@
+type: improvement
+improvement:
+  description: Fixes issue where program would crash if attempting to amalgomate vendored
+    modules using Go 1.20.
+  links:
+  - https://github.com/palantir/amalgomate/pull/187
