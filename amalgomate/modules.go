@@ -5,6 +5,7 @@
 package amalgomate
 
 import (
+	"bytes"
 	"encoding/json"
 	"go/ast"
 	"go/parser"
@@ -305,23 +306,68 @@ func moduleInfoForPackage(pkgName, dir string) (*GoModInfo, error) {
 	// (which may be a resolved directory like the vendor directory). So far, this seems to be the only way to reliably
 	// determine the on-disk path to the module for a package that may not have the same import path as its module.
 	// Run with the "-e" flag because this command returns an error if the specified module path does not contain any
-	// ".go" files (even if it is a valid module root). However, in this failure mode the "Path" field is still
-	// populated correctly, which is the only information that is needed.
+	// ".go" files (even if it is a valid module root).
+	//
+	// In Go 1.19 and earlier, in the failure mode in which module was vendored but the module directory itself was
+	// either not a valid Go package (because it did not contain any ".go" files) or was a valid Go package but not
+	// directly imported by the project, the "Path" field was still populated correctly, which was the only information
+	// that was needed.
+	//
+	// However, the behavior above was deemed as not technically correct by the Go team (the "go list" operation being
+	// run is supposed to operate on a named package, and in vendor mode if that package is not vendored then it
+	// shouldn't be returned as a result at all and fields such as "Dir" should not be populated), and starting in Go
+	// 1.20 the behavior changed such that the "Dir" field was no longer included in this case (see https://github.com/golang/go/issues/58418).
+	//
+	// To the best of my understanding, the logic below should only execute if the module source is coming from the
+	// vendor directory -- in regular module mode (including with replacement clauses), outputDirPkg.Module.Dir will be
+	// non-empty, so this function will return before this point. In order to compute the module location in the vendor
+	// directory, if the "Dir" field is not populated, the following logic is used to compute the value:
+	//  * Assume that outputDirPkg.GoFiles has at least 1 Go file (this should be true, since the input to this function
+	//    is a package, and a valid package must contain at least 1 Go file)
+	//  * Pick the first Go file, and assume that its path contains "/vendor/" (as noted above, this code block is only
+	//    expected to be executed in vendor mode)
+	//  * The Dir should be the vendor directory path + module path. This should always be true with the way that the
+	//    vendor directory is currently structured (even if a replace clause is used, the path in the vendor directory
+	//    uses the original module path).
+	//
+	// It should be possible to replace all of the logic below with (vendorDirPath + modulePath), but for now we will
+	// keep this logic (it also avoids having to separately determine the best logic for determining the vendor
+	// directory).
 	goListCmd := exec.Command("go", "list", "-e", "-json", modulePath)
+
+	// only consume stdout output since JSON is written to stdout (stderr may include informational output that makes
+	// output non-JSON -- see https://github.com/golang/go/issues/58417
+	stdoutBuf := &bytes.Buffer{}
+	goListCmd.Stdout = stdoutBuf
+
 	goListCmd.Dir = dir
-	output, err := goListCmd.CombinedOutput()
-	if err != nil {
-		return nil, errors.Wrapf(err, "faied to run command %v: %s", goListCmd.Args, string(output))
+	if err := goListCmd.Run(); err != nil {
+		return nil, errors.Wrapf(err, "failed to run command %v: %s", goListCmd.Args, stdoutBuf.String())
 	}
 	// only unmarshal "Dir" field
 	dirStruct := struct {
 		Dir string
 	}{}
-	if err := json.Unmarshal(output, &dirStruct); err != nil {
-		return nil, errors.Wrapf(err, "failed to unmarshal JSON: %s", string(output))
+	if err := json.Unmarshal(stdoutBuf.Bytes(), &dirStruct); err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal JSON: %s", stdoutBuf.String())
 	}
+
+	moduleDir := dirStruct.Dir
+	if moduleDir == "" {
+		if len(outputDirPkg.GoFiles) == 0 {
+			return nil, errors.Errorf("package %s does not contain any Go files", outputDirPkg.PkgPath)
+		}
+
+		goFilePath := outputDirPkg.GoFiles[0]
+		lastVendorIdx := strings.LastIndex(goFilePath, "/vendor/")
+		if lastVendorIdx == -1 {
+			return nil, errors.Errorf("expected Go file to be in vendor directory, but path %q is not in a vendor directory", goFilePath)
+		}
+		moduleDir = goFilePath[:lastVendorIdx] + "/vendor/" + modulePath
+	}
+
 	return &GoModInfo{
-		Dir:  dirStruct.Dir,
+		Dir:  moduleDir,
 		Path: modulePath,
 	}, nil
 }
