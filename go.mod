@@ -1,6 +1,6 @@
 module github.com/palantir/amalgomate
 
-go 1.21
+go 1.22.0
 
 require (
 	github.com/nmiyake/pkg/dirs v1.0.2
