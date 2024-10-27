@@ -19,8 +19,8 @@ import (
 	"strings"
 
 	"github.com/nmiyake/pkg/dirs"
+	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
-	"github.com/termie/go-shutil"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/packages"
 )
@@ -139,7 +139,9 @@ func rewriteImports(repackagedModuleRootDir, moduleImportPath, importPathToRepac
 		}
 		fmtSrcDir := path.Join(goRoot, "src", "flag")
 		fmtDstDir := path.Join(repackagedModuleRootDir, "amalgomated_flag")
-		if err := shutil.CopyTree(fmtSrcDir, fmtDstDir, nil); err != nil {
+		if err := copy.Copy(fmtSrcDir, fmtDstDir, copy.Options{
+			AddPermission: 0755,
+		}); err != nil {
 			return errors.Wrapf(err, "failed to copy directory %s to %s", fmtSrcDir, fmtDstDir)
 		}
 		if _, err := removeEmptyDirs(fmtDstDir); err != nil {
@@ -243,7 +245,7 @@ func copyModuleRecursively(modulePath, srcDir, dstDir string) error {
 				return errors.Wrapf(err, "failed to create directory at %s", dstPath)
 			}
 		} else {
-			if err := shutil.CopyFile(path, dstPath, false); err != nil {
+			if err := copy.Copy(path, dstPath); err != nil {
 				return errors.Wrapf(err, "failed to copy %s to %s", path, dstPath)
 			}
 		}
