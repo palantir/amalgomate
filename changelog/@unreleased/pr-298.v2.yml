@@ -1,8 +1,6 @@
 type: fix
 fix:
-  description: |-
-    Use the "github.com/otiai10/copy" module instead of the "github.com/termie/go-shutil" module for file and directory copy operations.
-
-    Fixes an issue where copying from a source directive with less restrictive permissions could cause failures for amalgomate.
+  description: Fixes an issue where copying from a source directive with less restrictive
+    permissions could cause failures for amalgomate.
   links:
   - https://github.com/palantir/amalgomate/pull/298
