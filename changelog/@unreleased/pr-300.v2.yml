@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Ensures that directories created by amalgomate have 0777 permissions.
+  links:
+  - https://github.com/palantir/amalgomate/pull/300
