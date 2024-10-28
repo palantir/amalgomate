@@ -1,0 +1,7 @@
+type: improvement
+improvement:
+  description: Make it such that amalgomated files are not all given 0755 permissions
+    -- instead, original permissions are preserved, but copying still works even if
+    original directory is not writable.
+  links:
+  - https://github.com/palantir/amalgomate/pull/299
