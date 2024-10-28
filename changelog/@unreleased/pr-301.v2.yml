@@ -1,0 +1,5 @@
+type: improvement
+improvement:
+  description: Update go-version to 1.23.2
+  links:
+  - https://github.com/palantir/amalgomate/pull/301
