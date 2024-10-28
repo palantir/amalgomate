@@ -139,9 +139,7 @@ func rewriteImports(repackagedModuleRootDir, moduleImportPath, importPathToRepac
 		}
 		fmtSrcDir := path.Join(goRoot, "src", "flag")
 		fmtDstDir := path.Join(repackagedModuleRootDir, "amalgomated_flag")
-		if err := copy.Copy(fmtSrcDir, fmtDstDir, copy.Options{
-			AddPermission: 0755,
-		}); err != nil {
+		if err := copy.Copy(fmtSrcDir, fmtDstDir); err != nil {
 			return errors.Wrapf(err, "failed to copy directory %s to %s", fmtSrcDir, fmtDstDir)
 		}
 		if _, err := removeEmptyDirs(fmtDstDir); err != nil {
