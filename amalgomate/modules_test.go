@@ -232,6 +232,7 @@ func AmalgomatedMain()	{}
 				filepath.Join(tmpDir, "internal"),
 				"github.com/repackaged-module",
 				"github.com/test-project/internal",
+				nil,
 			)
 			require.NoError(t, err)
 
