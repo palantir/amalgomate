@@ -279,9 +279,6 @@ func moduleInfoForPackage(pkgName, dir string) (*GoModInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(outputDirPkg.GoFiles) == 0 {
-		return nil, errors.Errorf("no Go files in package %s resolved from directory %s", pkgName, dir)
-	}
 
 	if outputDirPkg.Module == nil {
 		return nil, errors.Errorf("unable to determine module for package %s resolved from directory %s", pkgName, dir)
@@ -353,11 +350,7 @@ func moduleInfoForPackage(pkgName, dir string) (*GoModInfo, error) {
 	}
 
 	moduleDir := dirStruct.Dir
-	if moduleDir == "" {
-		if len(outputDirPkg.GoFiles) == 0 {
-			return nil, errors.Errorf("package %s does not contain any Go files", outputDirPkg.PkgPath)
-		}
-
+	if moduleDir == "" && len(outputDirPkg.GoFiles) > 0 {
 		goFilePath := outputDirPkg.GoFiles[0]
 		lastVendorIdx := strings.LastIndex(goFilePath, "/vendor/")
 		if lastVendorIdx == -1 {
