@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -36,7 +37,7 @@ import (
 // that path or subpath would not be rewritten, even though from a "path" perspective it would seem that this might be
 // part of the "github.com/repackage" module. The import operation that determines whether a package is part of a module
 // is performed relative to "repackagedModuleRootDir".
-func rewriteImports(repackagedModuleRootDir, moduleImportPath, importPathToRepackagedModule string) error {
+func rewriteImports(repackagedModuleRootDir, moduleImportPath, importPathToRepackagedModule string, doNotRewriteFlagImport []string) error {
 	fileSet := token.NewFileSet()
 	foundMain := false
 	flagPkgImported := false
@@ -63,7 +64,13 @@ func rewriteImports(repackagedModuleRootDir, moduleImportPath, importPathToRepac
 				return errors.Wrapf(err, "unable to unquote import %s", currImport.Path.Value)
 			}
 
-			if currImportPathUnquoted != "flag" {
+			if currImportPathUnquoted == "flag" {
+				// no need to update flag import if file is in the "do not rewrite" list
+				currFileRelPath := strings.TrimPrefix(fpath, repackagedModuleRootDir+string(os.PathSeparator))
+				if slices.Contains(doNotRewriteFlagImport, currFileRelPath) {
+					continue
+				}
+			} else {
 				// no need to repackage standard library packages that are not "flag"
 				if inStandardLibrary(currImportPathUnquoted) {
 					continue
@@ -144,6 +151,18 @@ func rewriteImports(repackagedModuleRootDir, moduleImportPath, importPathToRepac
 		}
 		if _, err := removeEmptyDirs(fmtDstDir); err != nil {
 			return errors.Wrapf(err, "failed to remove empty directories in destination %s", fmtDstDir)
+		}
+		dirEntries, err := os.ReadDir(fmtDstDir)
+		if err != nil {
+			return errors.Wrapf(err, "failed to read directory %s", fmtDstDir)
+		}
+		for _, dirEntry := range dirEntries {
+			if !dirEntry.IsDir() && strings.HasSuffix(dirEntry.Name(), "_test.go") {
+				// remove all "_test.go" files in the destination directory
+				if err := os.Remove(filepath.Join(fmtDstDir, dirEntry.Name())); err != nil {
+					return errors.Wrapf(err, "failed to remove file %s", filepath.Join(fmtDstDir, dirEntry.Name()))
+				}
+			}
 		}
 	}
 	return nil

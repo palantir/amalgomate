@@ -74,7 +74,7 @@ func repackage(config Config, outputDir string) error {
 		if err := copyModuleRecursively(currMainPkgModule.Path, currMainPkgModule.Dir, filepath.Join(projectModuleInfo.Dir, relPathFromModuleToOutputDir)); err != nil {
 			return errors.Wrapf(err, "failed to copy module")
 		}
-		if err := rewriteImports(internalDir, currMainPkgModule.Path, path.Join(projectModuleInfo.Path, relPathFromModuleToOutputDir)); err != nil {
+		if err := rewriteImports(internalDir, currMainPkgModule.Path, path.Join(projectModuleInfo.Path, relPathFromModuleToOutputDir), currMainPkg.DoNotRewriteFlagImport); err != nil {
 			return errors.Wrapf(err, "failed to rewrite imports for module %+v", currMainPkgModule)
 		}
 	}
@@ -149,7 +149,7 @@ func addImports(file *ast.File, fileSet *token.FileSet, outputDir string, config
 		return err
 	}
 
-	processedPkgs := make(map[SrcPkg]bool, len(config.Pkgs))
+	processedPkgs := make(map[string]bool, len(config.Pkgs))
 	for _, name := range sortedKeys(config.Pkgs) {
 		progPkg := config.Pkgs[name]
 
@@ -164,7 +164,7 @@ func addImports(file *ast.File, fileSet *token.FileSet, outputDir string, config
 		if !added {
 			return errors.Errorf("failed to add import %s", repackagedImportPath)
 		}
-		processedPkgs[progPkg] = true
+		processedPkgs[progPkg.MainPkg] = true
 	}
 	return nil
 }
@@ -246,17 +246,17 @@ func setVarCompositeLiteralElements(file *ast.File, constName string, elems []as
 func createMapLiteralEntries(pkgs map[string]SrcPkg) []ast.Expr {
 	// if multiple commands refer to the same package, the command that is lexicographically first is the one that
 	// is used for the named import. Create a map that stores the mapping from the package to the import name.
-	pkgToFirstCmdMap := make(map[SrcPkg]string, len(pkgs))
+	pkgToFirstCmdMap := make(map[string]string, len(pkgs))
 	for _, name := range sortedKeys(pkgs) {
-		if _, ok := pkgToFirstCmdMap[pkgs[name]]; !ok {
+		if _, ok := pkgToFirstCmdMap[pkgs[name].MainPkg]; !ok {
 			// add mapping only if it does not already exist
-			pkgToFirstCmdMap[pkgs[name]] = name
+			pkgToFirstCmdMap[pkgs[name].MainPkg] = name
 		}
 	}
 
 	var entries []ast.Expr
 	for _, name := range sortedKeys(pkgs) {
-		entries = append(entries, createMapKeyValueExpression(name, pkgToFirstCmdMap[pkgs[name]]))
+		entries = append(entries, createMapKeyValueExpression(name, pkgToFirstCmdMap[pkgs[name].MainPkg]))
 	}
 	return entries
 }
