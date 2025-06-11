@@ -1,0 +1,9 @@
+type: improvement
+improvement:
+  description: Adds the "do-not-rewrite-flag-import" option to configuration, which
+    allows specifying the relative paths to files for which the "flag" import should
+    not be rewritten to an amalgomated version. This is useful when amalgomating files
+    that may use the "flag" package to pass or interpret data structures (but not
+    for the flags on the program itself).
+  links:
+  - https://github.com/palantir/amalgomate/pull/334
