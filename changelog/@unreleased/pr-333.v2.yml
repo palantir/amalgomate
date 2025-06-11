@@ -1,0 +1,7 @@
+type: fix
+fix:
+  description: Fixes an issue where processing a package that has no Go files visible
+    to the current build configuration could cause a failure, even if that package
+    would not be amalgomated.
+  links:
+  - https://github.com/palantir/amalgomate/pull/333
