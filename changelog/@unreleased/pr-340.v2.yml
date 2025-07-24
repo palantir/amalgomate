@@ -1,0 +1,7 @@
+type: improvement
+improvement:
+  description: Update the header comment that is added to generated files to make
+    it match the official regular expression for comments that indicate that code
+    is generated as specified at https://github.com/golang/go/issues/13560#issuecomment-288457920.
+  links:
+  - https://github.com/palantir/amalgomate/pull/340
