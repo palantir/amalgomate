@@ -18,7 +18,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/nmiyake/pkg v1.0.0 // indirect
-	github.com/nmiyake/pkg/errorstringer v1.0.0 // indirect
+	github.com/nmiyake/pkg/errorstringer v1.1.0 // indirect
 	github.com/otiai10/mint v1.6.3 // indirect
 	github.com/palantir/pkg v1.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
