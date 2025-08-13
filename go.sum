@@ -8,8 +8,9 @@ github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/nmiyake/pkg v1.0.0 h1:HLaVYtHDMpgvKKudovOE4lFaiudQNL+8Imr89hWrSZg=
 github.com/nmiyake/pkg v1.0.0/go.mod h1:078BHtQj5Tk8Im6EpMHR0/Stp79lwL3FIRiGaC9hTDM=
-github.com/nmiyake/pkg/dirs v1.0.2 h1:2jrnpKNO6q2fiflC0w8hobPurGOHRlhzyWAjJx7OpNo=
 github.com/nmiyake/pkg/dirs v1.0.2/go.mod h1:fVEsJ8Y8gFb14mbXq4iFQgzR19mMLEKA/lX3Y7Ccl3w=
+github.com/nmiyake/pkg/dirs v1.1.0 h1:qyTzK3bTqAJfekQcU6vlydM/YRxhHsv6MiRFEwTkJcw=
+github.com/nmiyake/pkg/dirs v1.1.0/go.mod h1:lGSUDZPexhLt+aWYfPHXsqnt+HFr2l/+lbEMWUhdZ/U=
 github.com/nmiyake/pkg/errorstringer v1.0.0 h1:i8VFMHpy2orAs8Lsoi7wOdQ6ipxOUe9GRzimcNCEzBk=
 github.com/nmiyake/pkg/errorstringer v1.0.0/go.mod h1:M7rsuKy+fiW7j812cNTScqf7kixe7k/ETY/+cbaqzRw=
 github.com/nmiyake/pkg/gofiles v1.0.2 h1:kKHQTL2xjMUhN3TDdQOjujkvVHZi0jID7QQw+ELPbnk=

@@ -3,7 +3,7 @@ module github.com/palantir/amalgomate
 go 1.24.0
 
 require (
-	github.com/nmiyake/pkg/dirs v1.0.2
+	github.com/nmiyake/pkg/dirs v1.1.0
 	github.com/nmiyake/pkg/gofiles v1.0.2
 	github.com/otiai10/copy v1.14.0
 	github.com/palantir/pkg/cobracli v1.2.0
