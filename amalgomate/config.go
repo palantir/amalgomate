@@ -5,7 +5,7 @@
 package amalgomate
 
 import (
-	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -21,7 +21,7 @@ type SrcPkg struct {
 }
 
 func LoadConfig(configPath string) (Config, error) {
-	file, err := ioutil.ReadFile(configPath)
+	file, err := os.ReadFile(configPath)
 	if err != nil {
 		return Config{}, errors.Wrapf(err, "failed to read file %s", configPath)
 	}
