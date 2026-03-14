@@ -10,7 +10,6 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -156,7 +155,7 @@ func writeOutputGoFile(config Config, outputDir, packageName string) error {
 
 	// write output to file
 	outputFilePath := filepath.Join(outputDir, packageName+".go")
-	if err := ioutil.WriteFile(outputFilePath, outputWithSpaces, 0644); err != nil {
+	if err := os.WriteFile(outputFilePath, outputWithSpaces, 0644); err != nil {
 		return errors.Wrapf(err, "failed to write output to path: %s", outputFilePath)
 	}
 

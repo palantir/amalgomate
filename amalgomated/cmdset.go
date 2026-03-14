@@ -6,6 +6,7 @@ package amalgomated
 
 import (
 	"fmt"
+	"slices"
 	"unicode"
 
 	"github.com/pkg/errors"
@@ -136,11 +137,8 @@ func (c *cmdLibraryImpl) Cmds() []Cmd {
 func (c *cmdLibraryImpl) NewCmd(cmd string) (Cmd, error) {
 	found := false
 	cmds := c.cmdSet.Cmds()
-	for _, currCmd := range cmds {
-		if cmd == currCmd {
-			found = true
-			break
-		}
+	if slices.Contains(cmds, cmd) {
+		found = true
 	}
 
 	if !found {

@@ -26,7 +26,7 @@ func (c *testCmder) Run() ([]byte, error) {
 	if len(c.Args) > 0 && c.Args[0] == "error" {
 		return nil, fmt.Errorf("testCmder returned error based on provided arguments: %v", c.Args)
 	}
-	return []byte(fmt.Sprintf("Cmd: %v, args: %v, cmdWd: %v", c.Path, c.Args, c.Dir)), nil
+	return fmt.Appendf(nil, "Cmd: %v, args: %v, cmdWd: %v", c.Path, c.Args, c.Dir), nil
 }
 
 func TestRunnerWithPrependedArgs(t *testing.T) {
