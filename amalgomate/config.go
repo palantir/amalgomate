@@ -18,6 +18,7 @@ type Config struct {
 type SrcPkg struct {
 	MainPkg                string   `yaml:"main"`
 	DoNotRewriteFlagImport []string `yaml:"do-not-rewrite-flag-import"`
+	RenameInternal         bool     `yaml:"rename-internal"`
 }
 
 func LoadConfig(configPath string) (Config, error) {

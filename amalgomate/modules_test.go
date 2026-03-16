@@ -26,9 +26,10 @@ func Test_rewriteImports(t *testing.T) {
 	}()
 
 	for _, tc := range []struct {
-		Name      string
-		GoFiles   []gofiles.GoFileSpec
-		WantFiles map[string]string
+		Name           string
+		GoFiles        []gofiles.GoFileSpec
+		WantFiles      map[string]string
+		RenameInternal bool
 	}{
 		{
 			Name: "rewrites imports within the module",
@@ -222,6 +223,262 @@ func AmalgomatedMain()	{}
 `,
 			},
 		},
+		{
+			Name: "renames internal when renameInternal is true - import with /internal/ in middle",
+			GoFiles: []gofiles.GoFileSpec{
+				// primary module
+				{
+					RelPath: "go.mod",
+					Src: `module github.com/test-project
+
+require github.com/repackaged-module v1.0.0
+
+replace github.com/repackaged-module => ./repackaged-module-src
+`,
+				},
+				{
+					RelPath: "tools.go",
+					Src: `// +build tools
+package main
+
+import _ "github.com/repackaged-module"
+`,
+				},
+				{
+					RelPath: "internal/github.com/repackaged-module/main.go",
+					Src: `package main
+
+import _ "github.com/repackaged-module/internal/utils"
+
+func main() {}
+`,
+				},
+				{
+					RelPath: "internal/github.com/repackaged-module/internal_/utils/utils.go",
+					Src:     "package utils",
+				},
+				// repackaged module
+				{
+					RelPath: `repackaged-module-src/go.mod`,
+					Src:     `module github.com/repackaged-module`,
+				},
+				{
+					RelPath: `repackaged-module-src/main.go`,
+					Src: `package main
+
+import _ "github.com/repackaged-module/internal/utils"
+
+func main() {}
+`,
+				},
+				{
+					RelPath: `repackaged-module-src/internal/utils/utils.go`,
+					Src:     `package utils`,
+				},
+			},
+			WantFiles: map[string]string{
+				"internal/github.com/repackaged-module/internal_/utils/utils.go": "package utils",
+				"internal/github.com/repackaged-module/main.go": `package amalgomated
+
+import _ "github.com/test-project/internal/github.com/repackaged-module/internal_/utils"
+
+func AmalgomatedMain()	{}
+`,
+			},
+			RenameInternal: true,
+		},
+		{
+			Name: "renames internal when renameInternal is true - import ending with /internal",
+			GoFiles: []gofiles.GoFileSpec{
+				// primary module
+				{
+					RelPath: "go.mod",
+					Src: `module github.com/test-project
+
+require github.com/repackaged-module v1.0.0
+
+replace github.com/repackaged-module => ./repackaged-module-src
+`,
+				},
+				{
+					RelPath: "tools.go",
+					Src: `// +build tools
+package main
+
+import _ "github.com/repackaged-module"
+`,
+				},
+				{
+					RelPath: "internal/github.com/repackaged-module/main.go",
+					Src: `package main
+
+import _ "github.com/repackaged-module/pkg/internal"
+
+func main() {}
+`,
+				},
+				{
+					RelPath: "internal/github.com/repackaged-module/pkg/internal_/internal.go",
+					Src:     "package internal",
+				},
+				// repackaged module
+				{
+					RelPath: `repackaged-module-src/go.mod`,
+					Src:     `module github.com/repackaged-module`,
+				},
+				{
+					RelPath: `repackaged-module-src/main.go`,
+					Src: `package main
+
+import _ "github.com/repackaged-module/pkg/internal"
+
+func main() {}
+`,
+				},
+				{
+					RelPath: `repackaged-module-src/pkg/internal/internal.go`,
+					Src:     `package internal`,
+				},
+			},
+			WantFiles: map[string]string{
+				"internal/github.com/repackaged-module/pkg/internal_/internal.go": "package internal",
+				"internal/github.com/repackaged-module/main.go": `package amalgomated
+
+import _ "github.com/test-project/internal/github.com/repackaged-module/pkg/internal_"
+
+func AmalgomatedMain()	{}
+`,
+			},
+			RenameInternal: true,
+		},
+		{
+			Name: "renames internal when renameInternal is true - multiple internal segments",
+			GoFiles: []gofiles.GoFileSpec{
+				// primary module
+				{
+					RelPath: "go.mod",
+					Src: `module github.com/test-project
+
+require github.com/repackaged-module v1.0.0
+
+replace github.com/repackaged-module => ./repackaged-module-src
+`,
+				},
+				{
+					RelPath: "tools.go",
+					Src: `// +build tools
+package main
+
+import _ "github.com/repackaged-module"
+`,
+				},
+				{
+					RelPath: "internal/github.com/repackaged-module/main.go",
+					Src: `package main
+
+import _ "github.com/repackaged-module/internal/pkg/internal/utils"
+
+func main() {}
+`,
+				},
+				{
+					RelPath: "internal/github.com/repackaged-module/internal_/pkg/internal_/utils/utils.go",
+					Src:     "package utils",
+				},
+				// repackaged module
+				{
+					RelPath: `repackaged-module-src/go.mod`,
+					Src:     `module github.com/repackaged-module`,
+				},
+				{
+					RelPath: `repackaged-module-src/main.go`,
+					Src: `package main
+
+import _ "github.com/repackaged-module/internal/pkg/internal/utils"
+
+func main() {}
+`,
+				},
+				{
+					RelPath: `repackaged-module-src/internal/pkg/internal/utils/utils.go`,
+					Src:     `package utils`,
+				},
+			},
+			WantFiles: map[string]string{
+				"internal/github.com/repackaged-module/internal_/pkg/internal_/utils/utils.go": "package utils",
+				"internal/github.com/repackaged-module/main.go": `package amalgomated
+
+import _ "github.com/test-project/internal/github.com/repackaged-module/internal_/pkg/internal_/utils"
+
+func AmalgomatedMain()	{}
+`,
+			},
+			RenameInternal: true,
+		},
+		{
+			Name: "does not rename internal when renameInternal is false",
+			GoFiles: []gofiles.GoFileSpec{
+				// primary module
+				{
+					RelPath: "go.mod",
+					Src: `module github.com/test-project
+
+require github.com/repackaged-module v1.0.0
+
+replace github.com/repackaged-module => ./repackaged-module-src
+`,
+				},
+				{
+					RelPath: "tools.go",
+					Src: `// +build tools
+package main
+
+import _ "github.com/repackaged-module"
+`,
+				},
+				{
+					RelPath: "internal/github.com/repackaged-module/main.go",
+					Src: `package main
+
+import _ "github.com/repackaged-module/internal/utils"
+
+func main() {}
+`,
+				},
+				{
+					RelPath: "internal/github.com/repackaged-module/internal/utils/utils.go",
+					Src:     "package utils",
+				},
+				// repackaged module
+				{
+					RelPath: `repackaged-module-src/go.mod`,
+					Src:     `module github.com/repackaged-module`,
+				},
+				{
+					RelPath: `repackaged-module-src/main.go`,
+					Src: `package main
+
+import _ "github.com/repackaged-module/internal/utils"
+
+func main() {}
+`,
+				},
+				{
+					RelPath: `repackaged-module-src/internal/utils/utils.go`,
+					Src:     `package utils`,
+				},
+			},
+			WantFiles: map[string]string{
+				"internal/github.com/repackaged-module/internal/utils/utils.go": "package utils",
+				"internal/github.com/repackaged-module/main.go": `package amalgomated
+
+import _ "github.com/test-project/internal/github.com/repackaged-module/internal/utils"
+
+func AmalgomatedMain()	{}
+`,
+			},
+			RenameInternal: false,
+		},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
 			tmpDir := t.TempDir()
@@ -233,6 +490,7 @@ func AmalgomatedMain()	{}
 				"github.com/repackaged-module",
 				"github.com/test-project/internal",
 				nil,
+				tc.RenameInternal,
 			)
 			require.NoError(t, err)
 
@@ -740,10 +998,11 @@ func main() {
 // a destination directory.
 func Test_copyModuleRecursively(t *testing.T) {
 	for _, tc := range []struct {
-		Name       string
-		ModuleName string
-		SrcFiles   []gofiles.GoFileSpec
-		WantFiles  []string
+		Name           string
+		ModuleName     string
+		SrcFiles       []gofiles.GoFileSpec
+		WantFiles      []string
+		RenameInternal bool
 	}{
 		{
 			Name:       "Copies basic module",
@@ -853,6 +1112,116 @@ func Test_copyModuleRecursively(t *testing.T) {
 				"test-module-name/main.go",
 			},
 		},
+		{
+			Name:           "Renames internal directory in middle of path when renameInternal is true",
+			ModuleName:     "github.com/test",
+			RenameInternal: true,
+			SrcFiles: []gofiles.GoFileSpec{
+				{
+					RelPath: "go.mod",
+					Src:     "module github.com/test",
+				},
+				{
+					RelPath: "internal/utils/utils.go",
+					Src:     "package utils",
+				},
+				{
+					RelPath: "main.go",
+					Src:     "package main",
+				},
+			},
+			WantFiles: []string{
+				"github.com",
+				"github.com/test",
+				"github.com/test/internal_",
+				"github.com/test/internal_/utils",
+				"github.com/test/internal_/utils/utils.go",
+				"github.com/test/main.go",
+			},
+		},
+		{
+			Name:           "Renames internal directory at end of path when renameInternal is true",
+			ModuleName:     "github.com/test",
+			RenameInternal: true,
+			SrcFiles: []gofiles.GoFileSpec{
+				{
+					RelPath: "go.mod",
+					Src:     "module github.com/test",
+				},
+				{
+					RelPath: "pkg/internal/internal.go",
+					Src:     "package internal",
+				},
+				{
+					RelPath: "main.go",
+					Src:     "package main",
+				},
+			},
+			WantFiles: []string{
+				"github.com",
+				"github.com/test",
+				"github.com/test/main.go",
+				"github.com/test/pkg",
+				"github.com/test/pkg/internal_",
+				"github.com/test/pkg/internal_/internal.go",
+			},
+		},
+		{
+			Name:           "Renames multiple internal directories when renameInternal is true",
+			ModuleName:     "github.com/test",
+			RenameInternal: true,
+			SrcFiles: []gofiles.GoFileSpec{
+				{
+					RelPath: "go.mod",
+					Src:     "module github.com/test",
+				},
+				{
+					RelPath: "internal/pkg/internal/utils/utils.go",
+					Src:     "package utils",
+				},
+				{
+					RelPath: "main.go",
+					Src:     "package main",
+				},
+			},
+			WantFiles: []string{
+				"github.com",
+				"github.com/test",
+				"github.com/test/internal_",
+				"github.com/test/internal_/pkg",
+				"github.com/test/internal_/pkg/internal_",
+				"github.com/test/internal_/pkg/internal_/utils",
+				"github.com/test/internal_/pkg/internal_/utils/utils.go",
+				"github.com/test/main.go",
+			},
+		},
+		{
+			Name:           "Does not rename internal directory when renameInternal is false",
+			ModuleName:     "github.com/test",
+			RenameInternal: false,
+			SrcFiles: []gofiles.GoFileSpec{
+				{
+					RelPath: "go.mod",
+					Src:     "module github.com/test",
+				},
+				{
+					RelPath: "internal/utils/utils.go",
+					Src:     "package utils",
+				},
+				{
+					RelPath: "main.go",
+					Src:     "package main",
+				},
+			},
+			WantFiles: []string{
+				"github.com",
+				"github.com/test",
+				"github.com/test/internal",
+				"github.com/test/internal/utils",
+				"github.com/test/internal/utils/utils.go",
+				"github.com/test/main.go",
+			},
+		},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
 			tmpDir := t.TempDir()
@@ -865,7 +1234,7 @@ func Test_copyModuleRecursively(t *testing.T) {
 			_, err = gofiles.Write(srcDir, tc.SrcFiles)
 			require.NoError(t, err)
 
-			err = copyModuleRecursively(tc.ModuleName, srcDir, dstDir)
+			err = copyModuleRecursively(tc.ModuleName, srcDir, dstDir, tc.RenameInternal)
 			require.NoError(t, err)
 
 			gotFilePaths, err := allFilePaths(dstDir)

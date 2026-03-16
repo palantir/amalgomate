@@ -71,10 +71,21 @@ func repackage(config Config, outputDir string) error {
 			return errors.Errorf("module for package %s was reported as %s, which is the same as the project module: it is likely that this package is not part of a real module, and repackaging non-modules is not supported", currMainPkg.MainPkg, currMainPkgModule.Path)
 		}
 
-		if err := copyModuleRecursively(currMainPkgModule.Path, currMainPkgModule.Dir, filepath.Join(projectModuleInfo.Dir, relPathFromModuleToOutputDir)); err != nil {
+		if err := copyModuleRecursively(
+			currMainPkgModule.Path,
+			currMainPkgModule.Dir,
+			filepath.Join(projectModuleInfo.Dir, relPathFromModuleToOutputDir),
+			currMainPkg.RenameInternal,
+		); err != nil {
 			return errors.Wrapf(err, "failed to copy module")
 		}
-		if err := rewriteImports(internalDir, currMainPkgModule.Path, path.Join(projectModuleInfo.Path, relPathFromModuleToOutputDir), currMainPkg.DoNotRewriteFlagImport); err != nil {
+		if err := rewriteImports(
+			internalDir,
+			currMainPkgModule.Path,
+			path.Join(projectModuleInfo.Path, relPathFromModuleToOutputDir),
+			currMainPkg.DoNotRewriteFlagImport,
+			currMainPkg.RenameInternal,
+		); err != nil {
 			return errors.Wrapf(err, "failed to rewrite imports for module %+v", currMainPkgModule)
 		}
 	}
