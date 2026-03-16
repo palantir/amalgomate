@@ -18,6 +18,13 @@ import (
 )
 
 func Run(cfg Config, outputDir, pkg string) error {
+	// verify that configuration is valid. Although this is checked by [LoadConfig], perform the check here as well to
+	// ensure that Config that comes from other sources are also validated. It is important to validate this because the
+	// directory specified by cfg.AmalgomateDir is removed before running amalgomate so invalid values can be extremely dangerous.
+	if err := cfg.Validate(); err != nil {
+		return errors.Wrapf(err, "configuration is not valid")
+	}
+
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return errors.Wrapf(err, "failed to ensure that output directory exists: %s", outputDir)
 	}
