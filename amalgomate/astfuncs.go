@@ -33,20 +33,25 @@ const (
 // "outputDir" is a directory that exists. The provided configuration is processed based on the natural ordering of the
 // name of the commands.
 func repackage(config Config, outputDir string) error {
+	amalgomateDirName := internalDir
+	if config.AmalgomateDir != "" {
+		amalgomateDirName = config.AmalgomateDir
+	}
+
 	if outputDirInfo, err := os.Stat(outputDir); err != nil {
 		return errors.Wrapf(err, "failed to stat output directory: %s", outputDir)
 	} else if !outputDirInfo.IsDir() {
 		return errors.Wrapf(err, "not a directory: %s", outputDir)
 	}
 
-	internalDir := filepath.Join(outputDir, internalDir)
+	amalgomateDir := filepath.Join(outputDir, amalgomateDirName)
 	// remove output directory if it already exists
-	if err := os.RemoveAll(internalDir); err != nil {
-		return errors.Wrapf(err, "failed to remove directory: %s", internalDir)
+	if err := os.RemoveAll(amalgomateDir); err != nil {
+		return errors.Wrapf(err, "failed to remove directory: %s", amalgomateDir)
 	}
 
-	if err := os.Mkdir(internalDir, 0755); err != nil {
-		return errors.Wrapf(err, "failed to create %s directory at %s", internalDir, internalDir)
+	if err := os.Mkdir(amalgomateDir, 0755); err != nil {
+		return errors.Wrapf(err, "failed to create directory: %s", amalgomateDir)
 	}
 
 	projectModuleInfo, err := moduleInfoForDirectory(outputDir)
@@ -54,7 +59,7 @@ func repackage(config Config, outputDir string) error {
 		return errors.Wrapf(err, "failed to determine module for directory %s", outputDir)
 	}
 
-	relPathFromModuleToOutputDir, err := relpathNormalizedPaths(projectModuleInfo.Dir, internalDir)
+	relPathFromModuleToOutputDir, err := relpathNormalizedPaths(projectModuleInfo.Dir, amalgomateDir)
 	if err != nil {
 		return err
 	}
@@ -80,7 +85,7 @@ func repackage(config Config, outputDir string) error {
 			return errors.Wrapf(err, "failed to copy module")
 		}
 		if err := rewriteImports(
-			internalDir,
+			amalgomateDir,
 			currMainPkgModule.Path,
 			path.Join(projectModuleInfo.Path, relPathFromModuleToOutputDir),
 			currMainPkg.DoNotRewriteFlagImport,
@@ -169,8 +174,12 @@ func addImports(file *ast.File, fileSet *token.FileSet, outputDir string, config
 			return errors.Wrapf(err, "failed to get package information")
 		}
 
-		// repackaged import path is the project module import path + path to the output directory + internalDir + main package import path
-		repackagedImportPath := path.Join(projectModule.Path, pathFromProjectModuleToOutputDir, internalDir, mainPkgInfo.PkgPath)
+		// repackaged import path is the project module import path + path to the output directory + amalgomateDirName + main package import path
+		amalgomateDirName := internalDir
+		if config.AmalgomateDir != "" {
+			amalgomateDirName = config.AmalgomateDir
+		}
+		repackagedImportPath := path.Join(projectModule.Path, pathFromProjectModuleToOutputDir, amalgomateDirName, mainPkgInfo.PkgPath)
 		added := astutil.AddNamedImport(fileSet, file, name, repackagedImportPath)
 		if !added {
 			return errors.Errorf("failed to add import %s", repackagedImportPath)
