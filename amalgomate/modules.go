@@ -37,7 +37,16 @@ import (
 // that path or subpath would not be rewritten, even though from a "path" perspective it would seem that this might be
 // part of the "github.com/repackage" module. The import operation that determines whether a package is part of a module
 // is performed relative to "repackagedModuleRootDir".
-func rewriteImports(repackagedModuleRootDir, moduleImportPath, importPathToRepackagedModule string, doNotRewriteFlagImport []string) error {
+//
+// If "renameInternal" is true, then any import paths that have "internal" (in the original source" will be updated to
+// be "internal_" instead.
+func rewriteImports(
+	repackagedModuleRootDir,
+	moduleImportPath,
+	importPathToRepackagedModule string,
+	doNotRewriteFlagImport []string,
+	renameInternal bool,
+) error {
 	fileSet := token.NewFileSet()
 	foundMain := false
 	flagPkgImported := false
@@ -88,16 +97,25 @@ func rewriteImports(repackagedModuleRootDir, moduleImportPath, importPathToRepac
 			}
 			updated = true
 
+			// Save the original import path for astutil.RewriteImport
+			originalImportPath := currImportPathUnquoted
+
 			var updatedImport string
 			if currImportPathUnquoted == "flag" {
 				flagPkgImported = true
 				updatedImport = filepath.Join(importPathToRepackagedModule, "amalgomated_flag")
 			} else {
+				if renameInternal {
+					currImportPathUnquoted = strings.ReplaceAll(currImportPathUnquoted, "/internal/", "/internal_/")
+					if strings.HasSuffix(currImportPathUnquoted, "/internal") {
+						currImportPathUnquoted += "_"
+					}
+				}
 				updatedImport = path.Join(importPathToRepackagedModule, currImportPathUnquoted)
 			}
 
-			if !astutil.RewriteImport(fileSet, fileNode, currImportPathUnquoted, updatedImport) {
-				return errors.Errorf("failed to rewrite import from %s to %s", currImportPathUnquoted, updatedImport)
+			if !astutil.RewriteImport(fileSet, fileNode, originalImportPath, updatedImport) {
+				return errors.Errorf("failed to rewrite import from %s to %s", originalImportPath, updatedImport)
 			}
 
 			removeImportPathChecking(fileNode)
@@ -185,7 +203,10 @@ func rewriteImports(repackagedModuleRootDir, moduleImportPath, importPathToRepac
 // srcDir and dstDir must both be directories that exist and it must be possible to create directories that lead to the
 // "dstDir/modulePath" path. The permissions for all created directories will be 0755 regardless of the source directory
 // permissions. Does not follow symlinks.
-func copyModuleRecursively(modulePath, srcDir, dstDir string) error {
+//
+// If "renameInternal" is true, then any directories from srcDir with the name "internal" are renamed to be "internal_"
+// when copied to the destination. This has the effect of making the internal
+func copyModuleRecursively(modulePath, srcDir, dstDir string, renameInternal bool) error {
 	if !filepath.IsAbs(srcDir) {
 		srcDirAbsPath, err := filepath.Abs(srcDir)
 		if err != nil {
@@ -256,9 +277,27 @@ func copyModuleRecursively(modulePath, srcDir, dstDir string) error {
 			return nil
 		}
 
+		// if renameInternal is true, rewrite "internal" directories to be "internal_" instead
+		if renameInternal {
+			// handle when the path is exactly "internal" (the directory itself)
+			if relPathToSrc == "internal" {
+				relPathToSrc = "internal_"
+			} else {
+				// replace all occurrences of "/internal/"
+				relPathToSrc = strings.ReplaceAll(relPathToSrc, "/internal/", "/internal_/")
+				if strings.HasPrefix(relPathToSrc, "internal/") {
+					// handle "internal/" at the beginning of the path
+					relPathToSrc = "internal_/" + strings.TrimPrefix(relPathToSrc, "internal/")
+				}
+				// handle "/internal" at the end of the path (last directory before a file)
+				if strings.HasSuffix(relPathToSrc, "/internal") {
+					relPathToSrc = strings.TrimSuffix(relPathToSrc, "/internal") + "/internal_"
+				}
+			}
+		}
 		dstPath := filepath.Join(dstRootPath, relPathToSrc)
 		if d.IsDir() {
-			if err := os.Mkdir(dstPath, 0755); err != nil {
+			if err := os.MkdirAll(dstPath, 0755); err != nil {
 				return errors.Wrapf(err, "failed to create directory at %s", dstPath)
 			}
 		} else {
