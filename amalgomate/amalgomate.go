@@ -42,9 +42,11 @@ func Run(cfg Config, outputDir, pkg string) error {
 		return errors.Wrapf(err, "failed to repackage files specified in configuration")
 	}
 
-	// write output file that imports and uses repackaged files
-	if err := writeOutputGoFile(cfg, outputDir, pkg); err != nil {
-		return errors.Wrapf(err, "failed to write output file")
+	if !cfg.RepackageOnly {
+		// write output file that imports and uses repackaged files
+		if err := writeOutputGoFile(cfg, outputDir, pkg); err != nil {
+			return errors.Wrapf(err, "failed to write output file")
+		}
 	}
 
 	return nil

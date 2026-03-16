@@ -23,6 +23,9 @@ type Config struct {
 	// is safe to use as part of a path (it is not an absolute path, does not contain subdirectories or directives like
 	// "..", etc.).
 	AmalgomateDir string `yaml:"amalgomate-dir"`
+	// RepackageOnly specifies whether the amalgomate operation should only repackage target code. If true, does not
+	// write the top-level file that provides entrypoints to the amalgomated code.
+	RepackageOnly bool `yaml:"repackage-only"`
 }
 
 type SrcPkg struct {
