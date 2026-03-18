@@ -285,13 +285,13 @@ func copyModuleRecursively(modulePath, srcDir, dstDir string, renameInternal boo
 			} else {
 				// replace all occurrences of "/internal/"
 				relPathToSrc = strings.ReplaceAll(relPathToSrc, "/internal/", "/internal_/")
-				if strings.HasPrefix(relPathToSrc, "internal/") {
+				if after, ok := strings.CutPrefix(relPathToSrc, "internal/"); ok {
 					// handle "internal/" at the beginning of the path
-					relPathToSrc = "internal_/" + strings.TrimPrefix(relPathToSrc, "internal/")
+					relPathToSrc = "internal_/" + after
 				}
 				// handle "/internal" at the end of the path (last directory before a file)
-				if strings.HasSuffix(relPathToSrc, "/internal") {
-					relPathToSrc = strings.TrimSuffix(relPathToSrc, "/internal") + "/internal_"
+				if before, ok := strings.CutSuffix(relPathToSrc, "/internal"); ok {
+					relPathToSrc = before + "/internal_"
 				}
 			}
 		}
