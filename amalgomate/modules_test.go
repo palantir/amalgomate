@@ -1245,6 +1245,267 @@ func Test_copyModuleRecursively(t *testing.T) {
 	}
 }
 
+// Test_copiesEmbedFiles verifies that copyModuleRecursively copies files referenced by go:embed directives.
+func Test_copiesEmbedFiles(t *testing.T) {
+	for _, tc := range []struct {
+		Name           string
+		ModuleName     string
+		SrcFiles       []gofiles.GoFileSpec
+		WantFiles      []string
+		RenameInternal bool
+	}{
+		{
+			Name:       "Copies embed files in root package",
+			ModuleName: "github.com/test",
+			SrcFiles: []gofiles.GoFileSpec{
+				{
+					RelPath: "go.mod",
+					Src:     "module github.com/test",
+				},
+				{
+					RelPath: "main.go",
+					Src: `package main
+
+import _ "embed"
+
+//go:embed data.txt
+var content string
+
+func main() {}
+`,
+				},
+				{
+					RelPath: "data.txt",
+					Src:     "test data content",
+				},
+			},
+			WantFiles: []string{
+				"github.com",
+				"github.com/test",
+				"github.com/test/data.txt",
+				"github.com/test/main.go",
+			},
+		},
+		{
+			Name:       "Copies multiple embed files",
+			ModuleName: "github.com/test",
+			SrcFiles: []gofiles.GoFileSpec{
+				{
+					RelPath: "go.mod",
+					Src:     "module github.com/test",
+				},
+				{
+					RelPath: "main.go",
+					Src: `package main
+
+import _ "embed"
+
+//go:embed file1.txt
+var content1 string
+
+//go:embed file2.txt
+var content2 string
+
+func main() {}
+`,
+				},
+				{
+					RelPath: "file1.txt",
+					Src:     "content 1",
+				},
+				{
+					RelPath: "file2.txt",
+					Src:     "content 2",
+				},
+			},
+			WantFiles: []string{
+				"github.com",
+				"github.com/test",
+				"github.com/test/file1.txt",
+				"github.com/test/file2.txt",
+				"github.com/test/main.go",
+			},
+		},
+		{
+			Name:       "Copies embed files with wildcard pattern",
+			ModuleName: "github.com/test",
+			SrcFiles: []gofiles.GoFileSpec{
+				{
+					RelPath: "go.mod",
+					Src:     "module github.com/test",
+				},
+				{
+					RelPath: "main.go",
+					Src: `package main
+
+import "embed"
+
+//go:embed *.txt
+var content embed.FS
+
+func main() {}
+`,
+				},
+				{
+					RelPath: "file1.txt",
+					Src:     "content 1",
+				},
+				{
+					RelPath: "file2.txt",
+					Src:     "content 2",
+				},
+			},
+			WantFiles: []string{
+				"github.com",
+				"github.com/test",
+				"github.com/test/file1.txt",
+				"github.com/test/file2.txt",
+				"github.com/test/main.go",
+			},
+		},
+		{
+			Name:       "Copies embed files in subdirectory",
+			ModuleName: "github.com/test",
+			SrcFiles: []gofiles.GoFileSpec{
+				{
+					RelPath: "go.mod",
+					Src:     "module github.com/test",
+				},
+				{
+					RelPath: "main.go",
+					Src:     "package main\n\nfunc main() {}",
+				},
+				{
+					RelPath: "pkg/handler.go",
+					Src: `package pkg
+
+import _ "embed"
+
+//go:embed config.json
+var config string
+`,
+				},
+				{
+					RelPath: "pkg/config.json",
+					Src:     `{"key": "value"}`,
+				},
+			},
+			WantFiles: []string{
+				"github.com",
+				"github.com/test",
+				"github.com/test/main.go",
+				"github.com/test/pkg",
+				"github.com/test/pkg/config.json",
+				"github.com/test/pkg/handler.go",
+			},
+		},
+		{
+			Name:       "Copies embed files with directory pattern",
+			ModuleName: "github.com/test",
+			SrcFiles: []gofiles.GoFileSpec{
+				{
+					RelPath: "go.mod",
+					Src:     "module github.com/test",
+				},
+				{
+					RelPath: "main.go",
+					Src: `package main
+
+import "embed"
+
+//go:embed assets
+var content embed.FS
+
+func main() {}
+`,
+				},
+				{
+					RelPath: "assets/style.css",
+					Src:     "body { }",
+				},
+				{
+					RelPath: "assets/script.js",
+					Src:     "console.log('test');",
+				},
+			},
+			WantFiles: []string{
+				"github.com",
+				"github.com/test",
+				"github.com/test/assets",
+				"github.com/test/assets/script.js",
+				"github.com/test/assets/style.css",
+				"github.com/test/main.go",
+			},
+		},
+		{
+			Name:           "Renames internal directory in embed file paths when renameInternal is true",
+			ModuleName:     "github.com/test",
+			RenameInternal: true,
+			SrcFiles: []gofiles.GoFileSpec{
+				{
+					RelPath: "go.mod",
+					Src:     "module github.com/test",
+				},
+				{
+					RelPath: "main.go",
+					Src:     "package main\n\nfunc main() {}",
+				},
+				{
+					RelPath: "internal/pkg/handler.go",
+					Src: `package pkg
+
+import _ "embed"
+
+//go:embed data.txt
+var content string
+`,
+				},
+				{
+					RelPath: "internal/pkg/data.txt",
+					Src:     "internal data",
+				},
+			},
+			WantFiles: []string{
+				"github.com",
+				"github.com/test",
+				"github.com/test/internal_",
+				"github.com/test/internal_/pkg",
+				"github.com/test/internal_/pkg/data.txt",
+				"github.com/test/internal_/pkg/handler.go",
+				"github.com/test/main.go",
+			},
+		},
+	} {
+		t.Run(tc.Name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+
+			dstDir := filepath.Join(tmpDir, "dstDir")
+			err := os.Mkdir(dstDir, 0755)
+			require.NoError(t, err)
+
+			srcDir := filepath.Join(tmpDir, "srcDir")
+			_, err = gofiles.Write(srcDir, tc.SrcFiles)
+			require.NoError(t, err)
+
+			// Run go mod tidy to ensure the module is properly set up
+			goModTidy := exec.Command("go", "mod", "tidy")
+			goModTidy.Dir = srcDir
+			err = goModTidy.Run()
+			require.NoError(t, err)
+
+			err = copyModuleRecursively(tc.ModuleName, srcDir, dstDir, tc.RenameInternal)
+			require.NoError(t, err)
+
+			gotFilePaths, err := allFilePaths(dstDir)
+			require.NoError(t, err)
+
+			sort.Strings(gotFilePaths)
+			sort.Strings(tc.WantFiles)
+			assert.Equal(t, tc.WantFiles, gotFilePaths)
+		})
+	}
+}
+
 func allFilePaths(dir string) ([]string, error) {
 	var paths []string
 	if err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
