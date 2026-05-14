@@ -186,6 +186,56 @@ func rewriteImports(
 	return nil
 }
 
+// copyEmbedFilesForPackage loads the package at packageDir and copies all files referenced by go:embed directives
+// from srcDir to dstRootPath, maintaining relative paths and applying renameInternal transformations if specified.
+func copyEmbedFilesForPackage(packageDir, srcDir, dstRootPath string, renameInternal bool) error {
+	// Load the package at this directory to get embed file information
+	pkg, err := packageForPatternInDirectory(".", packageDir, packages.NeedName|packages.NeedFiles|packages.NeedEmbedFiles)
+	if err != nil {
+		return errors.Wrapf(err, "failed to load package at directory %s", packageDir)
+	}
+
+	// Copy all embed files for this package
+	for _, embedFile := range pkg.EmbedFiles {
+		// Make embed file path relative to the source directory
+		relEmbedPath, err := filepath.Rel(srcDir, embedFile)
+		if err != nil {
+			return errors.Wrapf(err, "failed to make embed file %s relative to %s", embedFile, srcDir)
+		}
+
+		// Apply renameInternal transformation to the embed file path
+		if renameInternal {
+			if relEmbedPath == "internal" {
+				relEmbedPath = "internal_"
+			} else {
+				relEmbedPath = strings.ReplaceAll(relEmbedPath, "/internal/", "/internal_/")
+				if after, ok := strings.CutPrefix(relEmbedPath, "internal/"); ok {
+					relEmbedPath = "internal_/" + after
+				}
+				if before, ok := strings.CutSuffix(relEmbedPath, "/internal"); ok {
+					relEmbedPath = before + "/internal_"
+				}
+			}
+		}
+
+		// Determine destination path for the embed file
+		dstEmbedPath := filepath.Join(dstRootPath, relEmbedPath)
+
+		// Create parent directory if it doesn't exist
+		dstEmbedDir := filepath.Dir(dstEmbedPath)
+		if err := os.MkdirAll(dstEmbedDir, 0755); err != nil {
+			return errors.Wrapf(err, "failed to create directory for embed file at %s", dstEmbedDir)
+		}
+
+		// Copy the embed file
+		if err := copy.Copy(embedFile, dstEmbedPath); err != nil {
+			return errors.Wrapf(err, "failed to copy embed file from %s to %s", embedFile, dstEmbedPath)
+		}
+	}
+
+	return nil
+}
+
 // copyModuleRecursively recursively copies the module with the canonical name modulePath from srcDir into dstDir. Only
 // copies files with the suffix ".go", omits files with the suffix "_test.go" and skips all directories named "vendor".
 // The contents of srcDir are copied into the directory path that consists of the module path converted into a file
@@ -260,6 +310,13 @@ func copyModuleRecursively(modulePath, srcDir, dstDir string, renameInternal boo
 				}
 				if currPathModulePath != modulePath {
 					return fs.SkipDir
+				}
+
+				// Copy any files referenced by go:embed directives in this package
+				if err := copyEmbedFilesForPackage(path, srcDir, dstRootPath, renameInternal); err != nil {
+					// TODO: log this error in the future instead of silently continuing
+					// For now, continue even if embed file copying fails to maintain backwards compatibility
+					_ = err
 				}
 			}
 		} else if !strings.HasSuffix(d.Name(), ".go") || strings.HasSuffix(d.Name(), "_test.go") {
