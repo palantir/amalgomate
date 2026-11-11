@@ -17,8 +17,8 @@ github.com/otiai10/copy
 ## explicit; go 1.18
 github.com/otiai10/mint
 github.com/otiai10/mint/mquery
-# github.com/palantir/pkg v1.2.0
-## explicit; go 1.26.0
+# github.com/palantir/pkg v1.3.0
+## explicit; go 1.27.0
 github.com/palantir/pkg
 # github.com/palantir/pkg/cobracli v1.4.0
 ## explicit; go 1.26.0
